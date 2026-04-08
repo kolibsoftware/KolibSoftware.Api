@@ -1,4 +1,5 @@
 using KolibSoftware.Api.Example.Models;
+using KolibSoftware.Api.Infra.Models;
 using KolibSoftware.Api.Infra.Repo;
 using Microsoft.AspNetCore.Mvc;
 
@@ -29,8 +30,7 @@ public sealed class DocumentController(
     public async Task<IActionResult> Create([FromHeader(Name = "UserId")] Guid userId, [FromBody] DocumentModel document)
     {
         document.Rid = Guid.NewGuid();
-        document.UpdatedAt = document.CreatedAt = DateTime.UtcNow;
-        document.UpdatedBy = document.CreatedBy = userId;
+        document.MarkAsCreated(userId);
         await repository.InsertAsync(document);
         return CreatedAtAction(nameof(GetById), new { rid = document.Rid }, document);
     }
@@ -43,8 +43,7 @@ public sealed class DocumentController(
         if (existingDocument == null) return NotFound();
         existingDocument.Title = document.Title;
         existingDocument.Content = document.Content;
-        existingDocument.UpdatedAt = DateTime.UtcNow;
-        existingDocument.UpdatedBy = userId;
+        existingDocument.MarkAsUpdated(userId);
         await repository.UpdateAsync(existingDocument);
         return NoContent();
     }
@@ -54,8 +53,7 @@ public sealed class DocumentController(
     {
         var document = await repository.GetByRidAsync(rid);
         if (document == null) return NotFound();
-        document.DeletedAt = DateTime.UtcNow;
-        document.DeletedBy = userId;
+        document.MarkAsDeleted(userId);
         await repository.UpdateAsync(document);
         return NoContent();
     }
