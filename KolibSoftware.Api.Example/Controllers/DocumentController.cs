@@ -12,10 +12,17 @@ public sealed class DocumentController(
 {
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] DocumentQuery query)
     {
-        var documents = await repository.GetAllAsync();
+        var documents = await repository.GetAllAsync(query);
         return Ok(documents);
+    }
+
+    [HttpGet("page")]
+    public async Task<IActionResult> GetPage([FromQuery] DocumentQuery query)
+    {
+        var page = await repository.GetPageAsync(query);
+        return Ok(page);
     }
 
     [HttpGet("{rid}")]
