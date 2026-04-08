@@ -1,0 +1,9 @@
+{
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "appsettings.json": "appsettings.*.json",
+    "I*.cs": "${capture}.cs",
+    "*.cs": "${capture}.*.cs",
+    "*.csproj": "${capture}.csproj.user"
+  }
+}
