@@ -14,4 +14,14 @@ public interface ICreateAuditable
     /// The identifier of the user who created the entity. This should be set to the ID of the user performing the create operation whenever a new entity is created. The repository or service layer should handle setting this property during a create operation.
     /// </summary>
     public Guid CreatedBy { get; set; }
+
+    /// <summary>
+    /// Marks the entity as created by setting the CreatedAt and CreatedBy properties. This method should be called by the repository or service layer when a new entity is created, passing in the ID of the user performing the create operation.
+    /// </summary>
+    /// <param name="userId"></param>
+    public void MarkAsCreated(Guid userId)
+    {
+        CreatedAt = DateTime.UtcNow;
+        CreatedBy = userId;
+    }
 }

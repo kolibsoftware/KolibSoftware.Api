@@ -14,4 +14,14 @@ public interface IUpdateAuditable
     /// The identifier of the user who last updated the entity. This should be set to the ID of the user performing the update whenever the entity is updated. The repository or service layer should handle setting this property during an update operation.
     /// </summary>
     public Guid UpdatedBy { get; set; }
+
+    /// <summary>
+    /// Marks the entity as updated by setting the UpdatedAt and UpdatedBy properties. This method should be called by the repository or service layer when an entity is updated, passing in the ID of the user performing the update operation.
+    /// </summary>
+    /// <param name="userId"></param>
+    public void MarkAsUpdated(Guid userId)
+    {
+        UpdatedAt = DateTime.UtcNow;
+        UpdatedBy = userId;
+    }
 }

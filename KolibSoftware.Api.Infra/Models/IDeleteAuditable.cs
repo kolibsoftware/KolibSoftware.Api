@@ -14,4 +14,14 @@ public interface IDeleteAuditable
     /// The identifier of the user who marked the entity as deleted. This should be set to the ID of the user performing the delete operation whenever the entity is marked as deleted. The repository or service layer should handle setting this property during a delete operation.
     /// </summary>
     public Guid? DeletedBy { get; set; }
+
+    /// <summary>
+    /// Marks the entity as deleted by setting the DeletedAt and DeletedBy properties. This method should be called by the repository or service layer when an entity is marked as deleted, passing in the ID of the user performing the delete operation.
+    /// </summary>
+    /// <param name="userId"></param>
+    public void MarkAsDeleted(Guid userId)
+    {
+        DeletedAt = DateTime.UtcNow;
+        DeletedBy = userId;
+    }
 }

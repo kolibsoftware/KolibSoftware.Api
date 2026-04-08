@@ -18,7 +18,7 @@ public static class DataUtils
     public static EntityTypeBuilder<T> IsResource<T>(this EntityTypeBuilder<T> builder) where T : class, IResource
     {
         builder.Property(x => x.Rid).IsUuid();
-        builder.HasKey(x => x.Rid);
+        builder.HasIndex(x => x.Rid).IsUnique();
         return builder;
     }
 

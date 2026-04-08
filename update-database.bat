@@ -1,0 +1,1 @@
+dotnet ef database update --project KolibSoftware.Api.Example/KolibSoftware.Api.Example.csproj --connection "server=127.0.0.1;port=3307;user=root;password=root;database=api_example;"
