@@ -44,6 +44,18 @@ public class Repository<T>(DbContext dbContext) : IRepository<T> where T : class
     }
 
     /// <summary>
+    /// Gets an entity of type T by its RID (resource identifier) from the data source. This method uses the DbSet's FirstOrDefaultAsync method to retrieve an entity that matches the specified RID. The RID is a GUID that uniquely identifies the entity across different systems and contexts, and is used for external references and integration. This method allows for retrieving entities based on their RID instead of their internal ID, which can be useful for scenarios where the ID is not known or not relevant. The method is asynchronous and supports cancellation through the CancellationToken parameter. If there is no entity with the specified RID in the data source, this method will return null.
+    /// </summary>
+    /// <param name="rid"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public virtual async Task<T?> GetByRidAsync(Guid rid, CancellationToken cancellationToken = default)
+    {
+        var item = await DbSet.FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Rid") == rid, cancellationToken);
+        return item;
+    }
+
+    /// <summary>
     /// Inserts a new entity of type T into the data source. This method uses the DbSet's AddAsync method to add a new entity to the data source, and then calls SaveChangesAsync on the DbContext to persist the changes. The method is asynchronous and supports cancellation through the CancellationToken parameter. After this method is called, the new entity will be saved in the data source and will have its primary key (ID) generated if it is an identity column.
     /// </summary>
     /// <param name="model"></param>
