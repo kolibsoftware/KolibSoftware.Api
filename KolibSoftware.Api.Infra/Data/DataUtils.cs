@@ -17,9 +17,7 @@ public static class DataUtils
     /// <returns></returns>
     public static EntityTypeBuilder<T> IsResource<T>(this EntityTypeBuilder<T> builder) where T : class, IResource
     {
-        builder.Property(x => x.Rid)
-            .IsUuid()
-            .IsRequired();
+        builder.Property(x => x.Rid).IsUuid();
         builder.HasKey(x => x.Rid);
         return builder;
     }
@@ -32,12 +30,8 @@ public static class DataUtils
     /// <returns></returns>
     public static EntityTypeBuilder<T> IsCreateAuditable<T>(this EntityTypeBuilder<T> builder) where T : class, ICreateAuditable
     {
-        builder.Property(x => x.CreatedAt)
-            .IsUtc()
-            .IsRequired();
-        builder.Property(x => x.CreatedBy)
-            .IsUuid()
-            .IsRequired();
+        builder.Property(x => x.CreatedAt).IsUtc();
+        builder.Property(x => x.CreatedBy).IsUuid();
         builder.HasIndex(x => x.CreatedBy);
         return builder;
     }
@@ -50,12 +44,8 @@ public static class DataUtils
     /// <returns></returns>
     public static EntityTypeBuilder<T> IsUpdateAuditable<T>(this EntityTypeBuilder<T> builder) where T : class, IUpdateAuditable
     {
-        builder.Property(x => x.UpdatedAt)
-            .IsUtc()
-            .IsRequired();
-        builder.Property(x => x.UpdatedBy)
-            .IsUuid()
-            .IsRequired();
+        builder.Property(x => x.UpdatedAt).IsUtc();
+        builder.Property(x => x.UpdatedBy).IsUuid();
         builder.HasIndex(x => x.UpdatedBy);
         return builder;
     }
@@ -68,12 +58,8 @@ public static class DataUtils
     /// <returns></returns>
     public static EntityTypeBuilder<T> IsDeleteAuditable<T>(this EntityTypeBuilder<T> builder) where T : class, IDeleteAuditable
     {
-        builder.Property(x => x.DeletedAt)
-            .IsUtc()
-            .IsRequired();
-        builder.Property(x => x.DeletedBy)
-            .IsUuid()
-            .IsRequired();
+        builder.Property(x => x.DeletedAt).IsUtc();
+        builder.Property(x => x.DeletedBy).IsUuid();
         builder.HasIndex(x => x.DeletedBy);
         return builder;
     }

@@ -46,7 +46,7 @@ public static class DatabaseUtils
         var converter = new ValueConverter<DateTime, DateTime>(
             v => v.ToUniversalTime(),
             v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
-        propertyBuilder.HasConversion(converter);
+        propertyBuilder.HasConversion(converter).IsRequired();
         return propertyBuilder;
     }
 
