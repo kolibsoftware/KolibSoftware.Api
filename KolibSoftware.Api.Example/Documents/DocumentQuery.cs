@@ -1,7 +1,7 @@
 using KolibSoftware.Api.Example.Models;
 using KolibSoftware.Api.Infra.Repo;
 
-namespace KolibSoftware.Api.Example.Controllers;
+namespace KolibSoftware.Api.Example.Documents;
 
 public class DocumentQuery : IPageQuery<DocumentModel>
 {

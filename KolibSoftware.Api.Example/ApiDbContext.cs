@@ -8,9 +8,11 @@ namespace KolibSoftware.Api.Example;
 public class ApiDbContext(DbContextOptions<ApiDbContext> options) : DbContext(options)
 {
 
-    public DbSet<DocumentModel> Documents { get; set; }
     public DbSet<EventModel> Events { get; set; }
+    public DbSet<TaskModel> Tasks { get; set; }
 
+    public DbSet<DocumentModel> Documents { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

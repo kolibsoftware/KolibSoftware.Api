@@ -46,4 +46,9 @@ public class TaskModel : IResource
     /// The collection of dependencies for the task, indicating other tasks that must be completed before this task can be executed. This allows for defining complex workflows and ensuring that tasks are executed in the correct order based on their dependencies.
     /// </summary>
     public ICollection<TaskDependency> Dependencies { get; set; } = [];
+
+    /// <summary>
+    /// The collection of dependents for the task, indicating other tasks that depend on the completion of this task before they can be executed. This allows for defining complex workflows and ensuring that tasks are executed in the correct order based on their dependencies.
+    /// </summary>
+    public ICollection<TaskDependency> Dependents { get; set; } = [];
 }

@@ -4,7 +4,7 @@ using KolibSoftware.Api.Infra.Models;
 using KolibSoftware.Api.Infra.Repo;
 using Microsoft.AspNetCore.Mvc;
 
-namespace KolibSoftware.Api.Example.Controllers;
+namespace KolibSoftware.Api.Example.Documents;
 
 [Route("api/[controller]")]
 public sealed class DocumentController(

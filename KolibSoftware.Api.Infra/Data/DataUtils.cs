@@ -108,15 +108,21 @@ public static class DataUtils
         modelBuilder.Entity<TaskDependency>(entity =>
         {
             entity.ToTable("task_dependency");
-            entity.HasKey(e => new { e.TaskId, e.DependencyId, });
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.DependentId).IsRequired();
+            entity.Property(e => e.DependencyId).IsRequired();
+
+            entity.HasIndex(e => e.DependentId);
+            entity.HasIndex(e => e.DependencyId);
 
             entity.HasOne<TaskModel>()
-                .WithMany()
-                .HasForeignKey(e => e.TaskId)
+                .WithMany(t => t.Dependencies)
+                .HasForeignKey(e => e.DependentId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne<TaskModel>()
-                .WithMany()
+                .WithMany(t => t.Dependents)
                 .HasForeignKey(e => e.DependencyId)
                 .OnDelete(DeleteBehavior.Restrict);
         });

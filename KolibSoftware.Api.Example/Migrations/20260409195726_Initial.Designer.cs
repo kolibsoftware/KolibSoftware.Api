@@ -9,10 +9,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace KolibSoftware.Api.Example.Database.Migrations
+namespace KolibSoftware.Api.Example.Migrations
 {
     [DbContext(typeof(ApiDbContext))]
-    [Migration("20260409144327_Initial")]
+    [Migration("20260409195726_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -111,6 +111,88 @@ namespace KolibSoftware.Api.Example.Database.Migrations
                         .IsUnique();
 
                     b.ToTable("event", (string)null);
+                });
+
+            modelBuilder.Entity("KolibSoftware.Api.Infra.Models.TaskDependency", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DependencyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DependentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DependencyId");
+
+                    b.HasIndex("DependentId");
+
+                    b.ToTable("task_dependency", (string)null);
+                });
+
+            modelBuilder.Entity("KolibSoftware.Api.Infra.Models.TaskModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasColumnType("json");
+
+                    b.Property<DateTime?>("HandledAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("tinytext");
+
+                    b.Property<Guid>("Rid")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("enum('Pending','Success','Cancelled','Failure')");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Rid")
+                        .IsUnique();
+
+                    b.ToTable("task", (string)null);
+                });
+
+            modelBuilder.Entity("KolibSoftware.Api.Infra.Models.TaskDependency", b =>
+                {
+                    b.HasOne("KolibSoftware.Api.Infra.Models.TaskModel", null)
+                        .WithMany("Dependents")
+                        .HasForeignKey("DependencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("KolibSoftware.Api.Infra.Models.TaskModel", null)
+                        .WithMany("Dependencies")
+                        .HasForeignKey("DependentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("KolibSoftware.Api.Infra.Models.TaskModel", b =>
+                {
+                    b.Navigation("Dependencies");
+
+                    b.Navigation("Dependents");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,7 +1,7 @@
 using KolibSoftware.Api.Infra.Events;
 using KolibSoftware.Api.Infra.Events.Attributes;
 
-namespace KolibSoftware.Api.Example.Controllers;
+namespace KolibSoftware.Api.Example.Documents;
 
 [EventHandler]
 public sealed class DocumentHandler : IEventHandler<DocumentEvent>
