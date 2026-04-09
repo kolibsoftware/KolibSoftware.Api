@@ -32,9 +32,9 @@ public static partial class EventLogs
     [LoggerMessage(
         EventId = 2,
         Level = LogLevel.Warning,
-        Message = "No handlers found for event type: {eventType}"
+        Message = "No event handlers found for event type: {eventType}"
     )]
-    public static partial void LogNoHandlersFound(this ILogger logger, string eventType);
+    public static partial void LogNoEventHandlersFound(this ILogger logger, string eventType);
 
     [LoggerMessage(
         EventId = 3,

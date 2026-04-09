@@ -6,12 +6,7 @@ namespace KolibSoftware.Api.Infra.Events;
 public sealed class EventWorkerSettings
 {
     /// <summary>
-    /// The delay to wait before dispatching an event. This allows for batching of events and reduces the number of dispatches. The default is 5 seconds.
+    /// The interval to wait before dispatching an event. This allows for batching of events and reduces the number of dispatches. The default is 5 seconds.
     /// </summary>
-    public TimeSpan Delay { get; set; } = TimeSpan.FromSeconds(5);
-
-    /// <summary>
-    /// The maximum time to wait before dispatching an event. If an event is not dispatched within this time, it will be discarded. The default is 5 minutes.
-    /// </summary>
-    public TimeSpan Threshold { get; set; } = TimeSpan.FromMinutes(5);
+    public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(5);
 }

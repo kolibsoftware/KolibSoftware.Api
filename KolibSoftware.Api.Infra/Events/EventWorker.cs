@@ -24,12 +24,7 @@ public sealed class EventWorker(
     /// <summary>
     /// Settings for the event worker, which is responsible for dispatching events to handlers. The delay is the time to wait before dispatching an event, and the threshold is the maximum time to wait before dispatching an event. If an event is not dispatched within the threshold, it will be discarded.
     /// </summary>
-    private readonly TimeSpan Delay = options.Value.Delay;
-
-    /// <summary>
-    /// Settings for the event worker, which is responsible for dispatching events to handlers. The delay is the time to wait before dispatching an event, and the threshold is the maximum time to wait before dispatching an event. If an event is not dispatched within the threshold, it will be discarded.
-    /// </summary>
-    private readonly TimeSpan Threshold = options.Value.Threshold;
+    private readonly TimeSpan Delay = options.Value.PollingInterval;
 
     /// <summary>
     /// Executes the background service, which periodically retrieves pending events from the event store and dispatches them to the appropriate handlers. The service uses a periodic timer to control the frequency of event retrieval and dispatching, and it handles any exceptions that occur during the process by logging them. The method continues to run until the service is stopped, at which point it will gracefully exit.
@@ -43,8 +38,7 @@ public sealed class EventWorker(
         {
             using var scope = serviceProvider.CreateScope();
             var repository = scope.ServiceProvider.GetRequiredService<IQueryableRepository<EventModel>>();
-            var timepoint = DateTime.UtcNow.Subtract(Threshold);
-            var query = new EventQuery(Threshold);
+            var query = new EventQuery();
             var events = await repository.GetAllAsync(query, stoppingToken);
             if (events.Any())
                 foreach (var @event in events)
@@ -90,7 +84,7 @@ public sealed class EventWorker(
         var handlers = serviceProvider.GetServices(handlerType).Cast<IEventHandler>().ToList();
         if (handlers.Count == 0)
         {
-            logger.LogNoHandlersFound(@event.Name);
+            logger.LogNoEventHandlersFound(@event.Name);
             return EventStatus.Failure;
         }
 
@@ -104,7 +98,7 @@ public sealed class EventWorker(
             }
             catch (Exception ex)
             {
-                var handlerTypeName = (handler as object)?.GetType().FullName ?? "UnknownHandler";
+                var handlerTypeName = handler.GetType().FullName ?? "UnknownHandler";
                 logger.LogErrorHandlingEvent(@event.Name, handlerTypeName, ex);
             }
         }
@@ -120,12 +114,10 @@ public sealed class EventWorker(
     /// <summary>
     /// Query that selects pending events that are older than a specified age threshold, to be dispatched by the event broker service.
     /// </summary>
-    /// <param name="age"></param>
-    public sealed class EventQuery(TimeSpan age) : IQuery<EventModel>
+    public sealed class EventQuery() : IQuery<EventModel>
     {
         public IQueryable<EventModel> Apply(IQueryable<EventModel> query)
         {
-            var timepoint = DateTime.UtcNow.Subtract(age);
             return query.Where(e => e.Status == EventStatus.Pending);
         }
     }

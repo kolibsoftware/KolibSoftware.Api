@@ -15,6 +15,7 @@ public class ApiDbContext(DbContextOptions<ApiDbContext> options) : DbContext(op
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.UseEvents();
+        modelBuilder.UseTasks();
         modelBuilder.Entity<DocumentModel>(entity =>
         {
             entity.ToTable("document");

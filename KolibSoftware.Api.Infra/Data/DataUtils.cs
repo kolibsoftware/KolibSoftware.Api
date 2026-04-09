@@ -88,4 +88,38 @@ public static class DataUtils
         });
         return builder;
     }
+
+    public static ModelBuilder UseTasks(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<TaskModel>(entity =>
+        {
+            entity.ToTable("task");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Rid).IsUuid().IsRequired();
+            entity.Property(e => e.Name).IsTinyText().IsRequired();
+            entity.Property(e => e.Data).IsJson().IsRequired();
+            entity.Property(e => e.CreatedAt).IsUtc().IsRequired();
+            entity.Property(e => e.HandledAt).IsUtc();
+            entity.Property(e => e.Status).IsEnum().IsRequired();
+
+            entity.HasIndex(e => e.Rid).IsUnique();
+        });
+        modelBuilder.Entity<TaskDependency>(entity =>
+        {
+            entity.ToTable("task_dependency");
+            entity.HasKey(e => new { e.TaskId, e.DependencyId, });
+
+            entity.HasOne<TaskModel>()
+                .WithMany()
+                .HasForeignKey(e => e.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne<TaskModel>()
+                .WithMany()
+                .HasForeignKey(e => e.DependencyId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+        return modelBuilder;
+    }
 }
