@@ -1,4 +1,5 @@
 using KolibSoftware.Api.Infra.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace KolibSoftware.Api.Infra.Data;
@@ -17,7 +18,7 @@ public static class DataUtils
     /// <returns></returns>
     public static EntityTypeBuilder<T> IsResource<T>(this EntityTypeBuilder<T> builder) where T : class, IResource
     {
-        builder.Property(x => x.Rid).IsUuid();
+        builder.Property(x => x.Rid).IsUuid().IsRequired();
         builder.HasIndex(x => x.Rid).IsUnique();
         return builder;
     }
@@ -30,8 +31,8 @@ public static class DataUtils
     /// <returns></returns>
     public static EntityTypeBuilder<T> IsCreateAuditable<T>(this EntityTypeBuilder<T> builder) where T : class, ICreateAuditable
     {
-        builder.Property(x => x.CreatedAt).IsUtc();
-        builder.Property(x => x.CreatedBy).IsUuid();
+        builder.Property(x => x.CreatedAt).IsUtc().IsRequired();
+        builder.Property(x => x.CreatedBy).IsUuid().IsRequired();
         builder.HasIndex(x => x.CreatedBy);
         return builder;
     }
@@ -44,8 +45,8 @@ public static class DataUtils
     /// <returns></returns>
     public static EntityTypeBuilder<T> IsUpdateAuditable<T>(this EntityTypeBuilder<T> builder) where T : class, IUpdateAuditable
     {
-        builder.Property(x => x.UpdatedAt).IsUtc();
-        builder.Property(x => x.UpdatedBy).IsUuid();
+        builder.Property(x => x.UpdatedAt).IsUtc().IsRequired();
+        builder.Property(x => x.UpdatedBy).IsUuid().IsRequired();
         builder.HasIndex(x => x.UpdatedBy);
         return builder;
     }
@@ -61,6 +62,30 @@ public static class DataUtils
         builder.Property(x => x.DeletedAt).IsUtc();
         builder.Property(x => x.DeletedBy).IsUuid();
         builder.HasIndex(x => x.DeletedBy);
+        return builder;
+    }
+
+    /// <summary>
+    /// Configures the model builder to use the EventModel entity and its related configurations. This method sets up the EventModel entity with the appropriate table name, primary key, properties, and indexes. It also ensures that the event data is stored as JSON and that the created and handled timestamps are stored in UTC. By calling this extension method in the model builder configuration, you can standardize how events are stored and managed in the database.
+    /// </summary>
+    /// <param name="builder"></param>
+    /// <returns></returns>
+    public static ModelBuilder UseEvents(this ModelBuilder builder)
+    {
+        builder.Entity<EventModel>(entity =>
+        {
+            entity.ToTable("event");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Rid).IsUuid().IsRequired();
+            entity.Property(x => x.Name).IsTinyText().IsRequired();
+            entity.Property(x => x.Data).IsJson().IsRequired();
+            entity.Property(x => x.CreatedAt).IsUtc().IsRequired();
+            entity.Property(x => x.HandledAt).IsUtc();
+            entity.Property(x => x.Status).IsEnum().IsRequired();
+
+            entity.HasIndex(x => x.Rid).IsUnique();
+        });
         return builder;
     }
 }

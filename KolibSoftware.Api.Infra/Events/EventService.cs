@@ -1,15 +1,15 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using KolibSoftware.Api.Infra.Models;
+using KolibSoftware.Api.Infra.Repo;
 
 namespace KolibSoftware.Api.Infra.Events;
 
 /// <summary>
 /// Implements the IEventService interface, providing functionality to publish events to the event broker. This service is responsible for creating event models based on the provided event data and storing them in the event store for later processing by the event worker. The PublishAsync method takes an event of a specific type, creates an EventModel instance with the appropriate properties, and saves it to the event store. The event type must be registered in the EventRegistry for it to be published successfully.
 /// </summary>
-/// <param name="eventStore"></param>
+/// <param name="repository"></param>
 public class EventService(
-    IEventStore eventStore
+    IRepository<EventModel> repository
 ) : IEventService
 {
 
@@ -28,11 +28,11 @@ public class EventService(
         {
             Rid = Guid.CreateVersion7(),
             Name = eventName,
-            Data = @event,
+            Data = JsonSerializer.SerializeToNode(@event)!,
             CreatedAt = DateTime.UtcNow,
             Status = EventStatus.Pending,
             HandledAt = null
         };
-        await eventStore.PutEventsAsync([_event], cancellationToken);
+        await repository.InsertAsync(_event, cancellationToken);
     }
 }

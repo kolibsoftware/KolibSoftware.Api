@@ -19,18 +19,7 @@ public static class DatabaseUtils
     /// </summary>
     /// <param name="propertyBuilder"></param>
     /// <returns></returns>
-    public static PropertyBuilder<Guid> IsUuid(this PropertyBuilder<Guid> propertyBuilder)
-    {
-        propertyBuilder.HasColumnType("uuid").IsRequired();
-        return propertyBuilder;
-    }
-
-    /// <summary>
-    /// Configures a nullable Guid property to use the "uuid" column type in the database. This is useful for properties that need to store UUID values but can also be null. By using this extension method, you can ensure that the appropriate column type is used for these properties, which can help optimize storage and performance for nullable UUID fields. Additionally, it adds an annotation to indicate that this column is intended to store UUID values, which can be useful for tooling and migrations.
-    /// </summary>
-    /// <param name="propertyBuilder"></param>
-    /// <returns></returns>
-    public static PropertyBuilder<Guid?> IsUuid(this PropertyBuilder<Guid?> propertyBuilder)
+    public static PropertyBuilder<T> IsUuid<T>(this PropertyBuilder<T> propertyBuilder)
     {
         propertyBuilder.HasColumnType("uuid");
         return propertyBuilder;
@@ -61,6 +50,77 @@ public static class DatabaseUtils
             v => v.HasValue ? v.Value.ToUniversalTime() : v,
             v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v);
         propertyBuilder.HasConversion(converter);
+        return propertyBuilder;
+    }
+
+    /// <summary>
+    /// Configures a string property to use the "tinytext" column type in the database. This is useful for properties that need to store short text values, as the "tinytext" type can help optimize storage for small strings. By using this extension method, you can ensure that the appropriate column type is used for these properties, which can improve performance and reduce storage requirements for short text fields. Additionally, it marks the property as required, which means that it cannot be null in the database.
+    /// </summary>
+    /// <param name="propertyBuilder"></param>
+    /// <returns></returns>
+    public static PropertyBuilder<T> IsTinyText<T>(this PropertyBuilder<T> propertyBuilder)
+    {
+        propertyBuilder.HasColumnType("tinytext");
+        return propertyBuilder;
+    }
+
+    /// <summary>
+    /// Configures a string property to use the "text" column type in the database. This is useful for properties that need to store longer text values, as the "text" type can handle larger strings than the default string mapping. By using this extension method, you can ensure that the appropriate column type is used for these properties, which can improve performance and reduce storage requirements for longer text fields. Additionally, it marks the property as required, which means that it cannot be null in the database.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="propertyBuilder"></param>
+    /// <returns></returns>
+    public static PropertyBuilder<T> IsText<T>(this PropertyBuilder<T> propertyBuilder)
+    {
+        propertyBuilder.HasColumnType("text");
+        return propertyBuilder;
+    }
+
+    /// <summary>
+    /// Configures a string property to use the "mediumtext" column type in the database. This is useful for properties that need to store medium-length text values, as the "mediumtext" type can handle larger strings than the "text" type. By using this extension method, you can ensure that the appropriate column type is used for these properties, which can improve performance and reduce storage requirements for medium-length text fields. Additionally, it marks the property as required, which means that it cannot be null in the database.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="propertyBuilder"></param>
+    /// <returns></returns>
+    public static PropertyBuilder<T> IsMediumText<T>(this PropertyBuilder<T> propertyBuilder)
+    {
+        propertyBuilder.HasColumnType("mediumtext");
+        return propertyBuilder;
+    }
+
+    /// <summary>
+    /// Configures a string property to use the "longtext" column type in the database. This is useful for properties that need to store very long text values, as the "longtext" type can handle larger strings than the "mediumtext" type. By using this extension method, you can ensure that the appropriate column type is used for these properties, which can improve performance and reduce storage requirements for very long text fields. Additionally, it marks the property as required, which means that it cannot be null in the database.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="propertyBuilder"></param>
+    /// <returns></returns>
+    public static PropertyBuilder<T> IsLongText<T>(this PropertyBuilder<T> propertyBuilder)
+    {
+        propertyBuilder.HasColumnType("longtext");
+        return propertyBuilder;
+    }
+
+    /// <summary>
+    /// Configures a property to use the "json" column type in the database. This is useful for properties that need to store JSON data, as the "json" type can handle structured data in a flexible way. By using this extension method, you can ensure that the appropriate column type is used for these properties, which can improve performance and provide better support for querying and indexing JSON data. Additionally, it marks the property as required, which means that it cannot be null in the database.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="propertyBuilder"></param>
+    /// <returns></returns>
+    public static PropertyBuilder<T> IsJson<T>(this PropertyBuilder<T> propertyBuilder)
+    {
+        propertyBuilder.HasColumnType("json");
+        return propertyBuilder;
+    }
+
+    /// <summary>
+    /// Configures a property to use an enum column type in the database. This extension method takes an enum type parameter and sets up the column type to be an enum with the appropriate values based on the names of the enum members. By using this extension method, you can ensure that the appropriate column type is used for properties that represent enum values, which can improve performance and provide better support for querying and indexing enum data. Additionally, it marks the property as required, which means that it cannot be null in the database.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="propertyBuilder"></param>
+    /// <returns></returns>
+    public static PropertyBuilder<T> IsEnum<T>(this PropertyBuilder<T> propertyBuilder) where T : struct, Enum
+    {
+        propertyBuilder.HasColumnType($"enum('{string.Join("','", Enum.GetNames<T>())}')");
         return propertyBuilder;
     }
 

@@ -1,4 +1,5 @@
 using KolibSoftware.Api.Example.Models;
+using KolibSoftware.Api.Infra.Events;
 using KolibSoftware.Api.Infra.Models;
 using KolibSoftware.Api.Infra.Repo;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,8 @@ namespace KolibSoftware.Api.Example.Controllers;
 
 [Route("api/[controller]")]
 public sealed class DocumentController(
-    IQueryableRepository<DocumentModel> repository
+    IQueryableRepository<DocumentModel> repository,
+    IEventService eventService
 ) : ControllerBase()
 {
 
@@ -39,6 +41,7 @@ public sealed class DocumentController(
         document.Rid = Guid.NewGuid();
         document.MarkAsCreated(userId);
         await repository.InsertAsync(document);
+        await eventService.PublishAsync(new DocumentEvent { Document = document, Action = "Created" });
         return CreatedAtAction(nameof(GetById), new { rid = document.Rid }, document);
     }
 
@@ -52,6 +55,7 @@ public sealed class DocumentController(
         existingDocument.Content = document.Content;
         existingDocument.MarkAsUpdated(userId);
         await repository.UpdateAsync(existingDocument);
+        await eventService.PublishAsync(new DocumentEvent { Document = existingDocument, Action = "Updated" });
         return NoContent();
     }
 
@@ -62,6 +66,7 @@ public sealed class DocumentController(
         if (document == null) return NotFound();
         document.MarkAsDeleted(userId);
         await repository.UpdateAsync(document);
+        await eventService.PublishAsync(new DocumentEvent { Document = document, Action = "Deleted" });
         return NoContent();
     }
 

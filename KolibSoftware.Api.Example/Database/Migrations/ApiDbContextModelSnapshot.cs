@@ -72,6 +72,43 @@ namespace KolibSoftware.Api.Example.Database.Migrations
 
                     b.ToTable("document", (string)null);
                 });
+
+            modelBuilder.Entity("KolibSoftware.Api.Infra.Models.EventModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasColumnType("json");
+
+                    b.Property<DateTime?>("HandledAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("tinytext");
+
+                    b.Property<Guid>("Rid")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("enum('Pending','Success','Partial','Failure')");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Rid")
+                        .IsUnique();
+
+                    b.ToTable("event", (string)null);
+                });
 #pragma warning restore 612, 618
         }
     }

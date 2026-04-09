@@ -1,3 +1,4 @@
+using System.Text.Json;
 using KolibSoftware.Api.Infra.Models;
 using KolibSoftware.Api.Infra.Repo;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,21 +42,18 @@ public sealed class EventWorker(
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
             using var scope = serviceProvider.CreateScope();
-            var eventStore = scope.ServiceProvider.GetRequiredService<IEventStore>();
+            var repository = scope.ServiceProvider.GetRequiredService<IQueryableRepository<EventModel>>();
             var timepoint = DateTime.UtcNow.Subtract(Threshold);
             var query = new EventQuery(Threshold);
-            var events = await eventStore.GetEventsAsync(query, stoppingToken);
+            var events = await repository.GetAllAsync(query, stoppingToken);
             if (events.Any())
-                foreach (var chunk in events.Chunk(20))
+                foreach (var @event in events)
                 {
                     try
                     {
-                        await Task.WhenAll(chunk.Select(async e =>
-                        {
-                            e.Status = await DispatchEvent(e, scope.ServiceProvider, stoppingToken);
-                            e.HandledAt = DateTime.UtcNow;
-                        }));
-                        await eventStore.PutEventsAsync(chunk, stoppingToken);
+                        @event.Status = await DispatchEvent(@event, scope.ServiceProvider, stoppingToken);
+                        @event.HandledAt = DateTime.UtcNow;
+                        await repository.UpdateAsync(@event, stoppingToken);
                     }
                     catch (Exception ex)
                     {
@@ -81,20 +79,27 @@ public sealed class EventWorker(
             return EventStatus.Failure;
         }
 
+        var data = @event.Data.Deserialize(eventType);
+        if (data == null)
+        {
+            logger.LogFailedToDeserializeEventData(@event.Name, eventType.FullName!);
+            return EventStatus.Failure;
+        }
+
         var handlerType = typeof(IEventHandler<>).MakeGenericType(eventType);
-        var handlers = serviceProvider.GetServices(handlerType);
-        if (!handlers.Any())
+        var handlers = serviceProvider.GetServices(handlerType).Cast<IEventHandler>().ToList();
+        if (handlers.Count == 0)
         {
             logger.LogNoHandlersFound(@event.Name);
             return EventStatus.Failure;
         }
 
         var successCount = 0;
-        foreach (dynamic? handler in handlers)
+        foreach (IEventHandler handler in handlers!)
         {
             try
             {
-                await handler!.HandleEventAsync((dynamic)@event.Data, cancellationToken);
+                await handler.HandleEventAsync(data, cancellationToken);
                 successCount++;
             }
             catch (Exception ex)
@@ -104,7 +109,7 @@ public sealed class EventWorker(
             }
         }
 
-        return successCount == handlers.Count()
+        return successCount == handlers.Count
             ? EventStatus.Success
             : successCount > 0
                 ? EventStatus.Partial
@@ -121,7 +126,7 @@ public sealed class EventWorker(
         public IQueryable<EventModel> Apply(IQueryable<EventModel> query)
         {
             var timepoint = DateTime.UtcNow.Subtract(age);
-            return query.Where(e => e.Status == EventStatus.Pending && e.CreatedAt <= timepoint);
+            return query.Where(e => e.Status == EventStatus.Pending);
         }
     }
 }

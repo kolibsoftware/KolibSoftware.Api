@@ -23,6 +23,13 @@ public static partial class EventLogs
     public static partial void LogUnregisteredEventType(this ILogger logger, string eventType);
 
     [LoggerMessage(
+        EventId = 5,
+        Level = LogLevel.Error,
+        Message = "Failed to deserialize event data for event type: {eventType}, expected type: {expectedType}"
+    )]
+    public static partial void LogFailedToDeserializeEventData(this ILogger logger, string eventType, string expectedType);
+
+    [LoggerMessage(
         EventId = 2,
         Level = LogLevel.Warning,
         Message = "No handlers found for event type: {eventType}"

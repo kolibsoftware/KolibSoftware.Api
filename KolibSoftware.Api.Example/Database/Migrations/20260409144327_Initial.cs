@@ -39,6 +39,28 @@ namespace KolibSoftware.Api.Example.Database.Migrations
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
+            migrationBuilder.CreateTable(
+                name: "event",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    Rid = table.Column<Guid>(type: "uuid(36)", nullable: false, collation: "ascii_general_ci"),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    Name = table.Column<string>(type: "tinytext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Data = table.Column<string>(type: "json", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    HandledAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    Status = table.Column<string>(type: "enum('Pending','Success','Partial','Failure')", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_event", x => x.Id);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
             migrationBuilder.CreateIndex(
                 name: "IX_document_CreatedBy",
                 table: "document",
@@ -59,6 +81,12 @@ namespace KolibSoftware.Api.Example.Database.Migrations
                 name: "IX_document_UpdatedBy",
                 table: "document",
                 column: "UpdatedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_event_Rid",
+                table: "event",
+                column: "Rid",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -66,6 +94,9 @@ namespace KolibSoftware.Api.Example.Database.Migrations
         {
             migrationBuilder.DropTable(
                 name: "document");
+
+            migrationBuilder.DropTable(
+                name: "event");
         }
     }
 }

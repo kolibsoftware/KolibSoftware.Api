@@ -1,3 +1,5 @@
+using KolibSoftware.Api.Infra.Models;
+using KolibSoftware.Api.Infra.Repo;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -16,8 +18,10 @@ public static class EventUtils
     /// <returns></returns>
     public static IHostApplicationBuilder AddEvents(this IHostApplicationBuilder builder)
     {
+        builder.Services.AddScoped<IRepository<EventModel>, Repository<EventModel>>();
+        builder.Services.AddScoped<IQueryableRepository<EventModel>, QueryableRepository<EventModel>>();
+        builder.Services.AddScoped<IEventService, EventService>();
         builder.Services.Configure<EventWorkerSettings>(builder.Configuration.GetSection("EventWorker"));
-        builder.Services.AddTransient<IEventService, EventService>();
         builder.Services.AddHostedService<EventWorker>();
         var types = EventHandlerRegistry.GetHandlerTypes();
         foreach (var type in types)
