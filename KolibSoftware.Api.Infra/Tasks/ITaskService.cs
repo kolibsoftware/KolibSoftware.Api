@@ -1,3 +1,5 @@
+using KolibSoftware.Api.Infra.Models;
+
 namespace KolibSoftware.Api.Infra.Tasks;
 
 /// <summary>
@@ -10,7 +12,8 @@ public interface ITaskService
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="task"></param>
+    /// <param name="dependencies">A collection of task models that the current task depends on. These tasks must be completed before the current task can be executed.</param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task PublishAsync<T>(T task, CancellationToken cancellationToken = default) where T : notnull;
+    /// <returns>The created TaskModel representing the published task.</returns>
+    Task<TaskModel> PublishAsync<T>(T task, IEnumerable<TaskModel> dependencies, CancellationToken cancellationToken = default) where T : notnull;
 }

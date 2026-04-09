@@ -18,10 +18,11 @@ public class TaskService(
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="task"></param>
+    /// <param name="dependencies">A collection of task models that the current task depends on. These tasks must be completed before the current task can be executed.</param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <returns>The created TaskModel representing the published task.</returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public async Task PublishAsync<T>(T @task, CancellationToken cancellationToken = default) where T : notnull
+    public async Task<TaskModel> PublishAsync<T>(T @task, IEnumerable<TaskModel> dependencies, CancellationToken cancellationToken = default) where T : notnull
     {
         var taskName = TaskRegistry.GetTaskName(typeof(T)) ?? throw new InvalidOperationException($"Task type {typeof(T).FullName} is not registered in TaskRegistry.");
         var _task = new TaskModel
@@ -31,8 +32,10 @@ public class TaskService(
             Data = JsonSerializer.SerializeToNode(@task)!,
             CreatedAt = DateTime.UtcNow,
             Status = Models.TaskStatus.Pending,
-            HandledAt = null
+            HandledAt = null,
+            Dependencies = [.. dependencies.Select(x => new TaskDependency { DependencyId = x.Id })]
         };
         await repository.InsertAsync(_task, cancellationToken);
+        return _task;
     }
 }

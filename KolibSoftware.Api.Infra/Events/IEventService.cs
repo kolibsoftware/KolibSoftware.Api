@@ -1,3 +1,5 @@
+using KolibSoftware.Api.Infra.Models;
+
 namespace KolibSoftware.Api.Infra.Events;
 
 /// <summary>
@@ -11,6 +13,6 @@ public interface IEventService
     /// <typeparam name="T"></typeparam>
     /// <param name="event"></param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task PublishAsync<T>(T @event, CancellationToken cancellationToken = default) where T : notnull;
+    /// <returns>The created EventModel representing the published event.</returns>
+    Task<EventModel> PublishAsync<T>(T @event, CancellationToken cancellationToken = default) where T : notnull;
 }

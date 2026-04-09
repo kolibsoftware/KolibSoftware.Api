@@ -19,9 +19,9 @@ public class EventService(
     /// <typeparam name="T"></typeparam>
     /// <param name="event"></param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <returns>The created EventModel representing the published event.</returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public async Task PublishAsync<T>(T @event, CancellationToken cancellationToken = default) where T : notnull
+    public async Task<EventModel> PublishAsync<T>(T @event, CancellationToken cancellationToken = default) where T : notnull
     {
         var eventName = EventRegistry.GetEventName(typeof(T)) ?? throw new InvalidOperationException($"Event type {typeof(T).FullName} is not registered in EventRegistry.");
         var _event = new EventModel
@@ -34,5 +34,6 @@ public class EventService(
             HandledAt = null
         };
         await repository.InsertAsync(_event, cancellationToken);
+        return _event;
     }
 }

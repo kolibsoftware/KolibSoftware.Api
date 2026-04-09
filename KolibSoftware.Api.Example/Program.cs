@@ -2,10 +2,13 @@ using KolibSoftware.Api.Example;
 using KolibSoftware.Api.Infra.Events;
 using KolibSoftware.Api.Infra.Events.Attributes;
 using KolibSoftware.Api.Infra.Repo;
+using KolibSoftware.Api.Infra.Tasks;
+using KolibSoftware.Api.Infra.Tasks.Attributes;
 using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 [assembly: EnableEvents]
+[assembly: EnableTasks]
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<DbContext, ApiDbContext>(options =>
@@ -21,6 +24,7 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped(typeof(IQueryableRepository<>), typeof(QueryableRepository<>));
 builder.Services.AddControllers();
 builder.AddEvents();
+builder.AddTasks();
 
 var app = builder.Build();
 app.MapControllers();
