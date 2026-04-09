@@ -104,6 +104,16 @@ public static class DataUtils
             entity.Property(e => e.Status).IsEnum().IsRequired();
 
             entity.HasIndex(e => e.Rid).IsUnique();
+
+            entity.HasMany(e => e.Dependencies)
+                .WithOne(d => d.Dependent)
+                .HasForeignKey(d => d.DependentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Dependents)
+                .WithOne(d => d.Dependency)
+                .HasForeignKey(d => d.DependencyId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
         modelBuilder.Entity<TaskDependency>(entity =>
         {
@@ -116,12 +126,12 @@ public static class DataUtils
             entity.HasIndex(e => e.DependentId);
             entity.HasIndex(e => e.DependencyId);
 
-            entity.HasOne<TaskModel>()
+            entity.HasOne(x => x.Dependent)
                 .WithMany(t => t.Dependencies)
                 .HasForeignKey(e => e.DependentId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne<TaskModel>()
+            entity.HasOne(x => x.Dependency)
                 .WithMany(t => t.Dependents)
                 .HasForeignKey(e => e.DependencyId)
                 .OnDelete(DeleteBehavior.Restrict);

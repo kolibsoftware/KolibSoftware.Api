@@ -109,7 +109,7 @@ public sealed class TaskWorker(
     {
         public IQueryable<TaskModel> Apply(IQueryable<TaskModel> query)
         {
-            return query.Where(t => t.Status == Models.TaskStatus.Pending);
+            return query.Where(t => t.Status == Models.TaskStatus.Pending && t.Dependencies.All(d => d.Dependency.Status == Models.TaskStatus.Success));
         }
     }
 }

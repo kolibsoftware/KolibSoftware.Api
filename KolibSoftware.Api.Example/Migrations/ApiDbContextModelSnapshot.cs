@@ -172,17 +172,21 @@ namespace KolibSoftware.Api.Example.Migrations
 
             modelBuilder.Entity("KolibSoftware.Api.Infra.Models.TaskDependency", b =>
                 {
-                    b.HasOne("KolibSoftware.Api.Infra.Models.TaskModel", null)
+                    b.HasOne("KolibSoftware.Api.Infra.Models.TaskModel", "Dependency")
                         .WithMany("Dependents")
                         .HasForeignKey("DependencyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("KolibSoftware.Api.Infra.Models.TaskModel", null)
+                    b.HasOne("KolibSoftware.Api.Infra.Models.TaskModel", "Dependent")
                         .WithMany("Dependencies")
                         .HasForeignKey("DependentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Dependency");
+
+                    b.Navigation("Dependent");
                 });
 
             modelBuilder.Entity("KolibSoftware.Api.Infra.Models.TaskModel", b =>

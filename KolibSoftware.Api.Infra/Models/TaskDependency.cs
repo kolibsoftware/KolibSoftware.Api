@@ -19,4 +19,14 @@ public class TaskDependency
     /// The unique identifier of the parent task that has a dependency on the child task. This indicates that the parent task cannot be executed until the child task has been completed successfully.
     /// </summary>
     public int DependencyId { get; set; }
+
+    /// <summary>
+    /// The navigation property for the dependent task, allowing for easy access to the child task that the parent task depends on. This can be used for querying and managing task dependencies within the application.
+    /// </summary>
+    public TaskModel Dependent { get; set; } = default!;
+
+    /// <summary>
+    /// The navigation property for the dependency task, allowing for easy access to the parent task that has a dependency on the child task. This can be used for querying and managing task dependencies within the application.
+    /// </summary>
+    public TaskModel Dependency { get; set; } = default!;
 }
