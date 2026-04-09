@@ -32,7 +32,7 @@ namespace KolibSoftware.Api.Example.Migrations
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
@@ -46,12 +46,17 @@ namespace KolibSoftware.Api.Example.Migrations
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<byte[]>("Embedding")
+                        .IsRequired()
+                        .HasColumnType("vector(2560)")
+                        .HasAnnotation("MariaDB:VectorColumn", "VECTOR(2560)");
+
                     b.Property<Guid>("Rid")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("tinytext");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");

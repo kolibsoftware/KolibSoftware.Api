@@ -22,10 +22,11 @@ namespace KolibSoftware.Api.Example.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     Rid = table.Column<Guid>(type: "uuid(36)", nullable: false, collation: "ascii_general_ci"),
-                    Title = table.Column<string>(type: "longtext", nullable: false)
+                    Title = table.Column<string>(type: "tinytext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Content = table.Column<string>(type: "longtext", nullable: false)
+                    Content = table.Column<string>(type: "text", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    Embedding = table.Column<byte[]>(type: "vector(2560)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid(36)", nullable: false, collation: "ascii_general_ci"),
                     UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),

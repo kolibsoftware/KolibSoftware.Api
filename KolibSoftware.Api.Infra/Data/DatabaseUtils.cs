@@ -124,4 +124,78 @@ public static class DatabaseUtils
         return propertyBuilder;
     }
 
+    /// <summary>
+    /// Configures a float array property to be stored as a vector in the database. This extension method sets up the column type to be a vector with the specified dimension and defines a conversion to store the float array as bytes in the database. It also adds an annotation to indicate that this column is intended to store vector data, which can be useful for tooling and migrations. Additionally, it sets up a value comparer to ensure that changes to the float array are properly tracked by Entity Framework Core, allowing for accurate change detection and updates when the vector data is modified.
+    /// </summary>
+    /// <param name="propertyBuilder"></param>
+    /// <param name="dimension"></param>
+    /// <returns></returns>
+    public static PropertyBuilder<float[]> IsVector(this PropertyBuilder<float[]> propertyBuilder, int dimension)
+    {
+        propertyBuilder.HasColumnType($"vector({dimension})")
+            .HasConversion(
+                vec => MemoryMarshal.AsBytes(vec).ToArray(),
+                bytes => MemoryMarshal.Cast<byte, float>(bytes).ToArray()
+            )
+            .HasAnnotation("MariaDB:VectorColumn", $"VECTOR({dimension})")
+            .Metadata.SetValueComparer(new ValueComparer<float[]>(
+                (a, b) => a.SequenceEqual(b),
+                v => v.Aggregate(0, (hash, item) => HashCode.Combine(hash, item.GetHashCode())),
+                v => v.ToArray()
+            ));
+        return propertyBuilder;
+    }
+
+    /// <summary>
+    /// Configures an index to be a vector index in the database. This extension method adds an annotation to indicate that the index is intended to be a vector index, with the specified parameters for M and distance. By using this extension method, you can ensure that the appropriate index type is used for properties that represent vector data, which can improve performance and provide better support for querying and indexing vector data. The parameters allow you to customize the behavior of the vector index based on your specific requirements for similarity search and distance calculations.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="builder"></param>
+    /// <param name="m"></param>
+    /// <param name="distance"></param>
+    /// <returns></returns>
+    public static IndexBuilder<T> IsVector<T>(
+        this IndexBuilder<T> builder,
+        int m = 6,
+        string distance = "euclidean") where T : class
+    {
+        builder.Metadata.SetOrRemoveAnnotation("MariaDB:VectorIndex", $"M={m} DISTANCE={distance}");
+        return builder;
+    }
+
+    /// <summary>
+    /// Defines a custom database function for calculating the distance between two vectors. This method is intended to be used in LINQ to Entities queries, where it will be translated into the appropriate SQL function call for calculating vector distance in the database. By using this method, you can perform vector distance calculations directly in your LINQ queries, allowing for efficient querying and filtering of data based on vector similarity. The actual implementation of the distance calculation will depend on the specific database and vector functions available, but this method serves as a placeholder for integrating those calculations into your Entity Framework Core queries.
+    /// </summary>
+    /// <param name="v1"></param>
+    /// <param name="v2"></param>
+    /// <returns></returns>
+    /// <exception cref="NotSupportedException"></exception>
+    public static float VecDistance(float[] v1, float[] v2) => throw new NotSupportedException("Only for use in LINQ to Entities");
+
+    /// <summary>
+    /// Configures the model builder to recognize and use the custom vector distance function defined in the VecDistance method. This extension method sets up the necessary translation for the VecDistance function so that it can be used in LINQ to Entities queries and will be properly translated into the corresponding SQL function calls for calculating vector distance in the database. By calling this method during model configuration, you can ensure that your application can leverage vector distance calculations directly in your LINQ queries, allowing for efficient querying and filtering of data based on vector similarity.
+    /// </summary>
+    /// <param name="modelBuilder"></param>
+    public static void UseVectors(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.HasDbFunction(typeof(DatabaseUtils).GetMethod(nameof(VecDistance), [typeof(float[]), typeof(float[])])!)
+            .HasTranslation(args =>
+        {
+            var fromTextCall = new SqlFunctionExpression(
+                "VEC_FromText",
+                [args.ElementAt(1)],
+                nullable: true,
+                argumentsPropagateNullability: [true],
+                type: typeof(byte[]),
+                typeMapping: new ByteArrayTypeMapping("vector"));
+
+            return new SqlFunctionExpression(
+                "VEC_DISTANCE",
+                [args.ElementAt(0), fromTextCall],
+                nullable: true,
+                argumentsPropagateNullability: [true, true],
+                type: typeof(float),
+                typeMapping: null);
+        });
+    }
 }

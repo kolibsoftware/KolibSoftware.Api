@@ -12,12 +12,13 @@ public class ApiDbContext(DbContextOptions<ApiDbContext> options) : DbContext(op
     public DbSet<TaskModel> Tasks { get; set; }
 
     public DbSet<DocumentModel> Documents { get; set; }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.UseEvents();
         modelBuilder.UseTasks();
+        modelBuilder.UseVectors();
         modelBuilder.Entity<DocumentModel>(entity =>
         {
             entity.ToTable("document");
@@ -27,6 +28,12 @@ public class ApiDbContext(DbContextOptions<ApiDbContext> options) : DbContext(op
                 .IsCreateAuditable()
                 .IsUpdateAuditable()
                 .IsDeleteAuditable();
+
+            entity.Property(e => e.Title).IsTinyText().IsRequired();
+            entity.Property(e => e.Content).IsText().IsRequired();
+            entity.Property(e => e.Embedding).IsVector(DocumentModel.EmptyEmbedding.Length).IsRequired();
+
+            // entity.HasIndex(e => e.Embedding).IsVector();
         });
     }
 }
