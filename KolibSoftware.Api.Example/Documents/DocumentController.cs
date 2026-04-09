@@ -1,9 +1,12 @@
 using KolibSoftware.Api.Example.Models;
+using KolibSoftware.Api.Example.Services;
+using KolibSoftware.Api.Infra.Data;
 using KolibSoftware.Api.Infra.Events;
 using KolibSoftware.Api.Infra.Models;
 using KolibSoftware.Api.Infra.Repo;
 using KolibSoftware.Api.Infra.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace KolibSoftware.Api.Example.Documents;
 
@@ -11,7 +14,10 @@ namespace KolibSoftware.Api.Example.Documents;
 public sealed class DocumentController(
     IQueryableRepository<DocumentModel> repository,
     IEventService eventService,
-    ITaskService taskService
+    ITaskService taskService,
+    OllamaService ollamaService,
+    BitNetService bitNetService,
+    ApiDbContext context
 ) : ControllerBase()
 {
 
@@ -81,5 +87,27 @@ public sealed class DocumentController(
             await Request.Body.CopyToAsync(stream);
         await taskService.PublishAsync(new ExtractTask { Path = path });
         return Ok();
+    }
+
+    [HttpGet("search")]
+    public async Task<IActionResult> QueryTextDocuments([FromQuery] string query)
+    {
+        var queryEmbedding = await ollamaService.EmbedAsync(query);
+        var documents = await context.Documents
+            .OrderBy(d => DatabaseUtils.VecDistance(d.Embedding, queryEmbedding))
+            .Take(5)
+            .ToListAsync();
+        var prompt = $"Query: {query}\n\nTop 5 relevant documents:\n {string.Join("\n\n", documents.Select(d => $"- {d.Summary}"))}\n\nGenerate a response based on the query and the relevant documents.";
+        var response = await bitNetService.GenerateAsync(prompt);
+        return Ok(new
+        {
+            response,
+            documents = documents.Select(d => new
+            {
+                d.Rid,
+                d.Title,
+                d.Summary,
+            })
+        });
     }
 }

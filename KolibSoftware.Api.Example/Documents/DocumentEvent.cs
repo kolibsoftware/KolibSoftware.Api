@@ -21,7 +21,5 @@ public sealed class DocumentEventHandler(
     {
         if (@event.Document == null) return;
         if (@event.Action != "Created" && @event.Action != "Updated") return;
-        var task = await taskService.PublishAsync(new DocumentTask { DocumentRid = @event.Document.Rid }, cancellationToken);
-        Console.WriteLine($"Document Event: {@event.Action} - Task Id: {task.Id}");
     }
 }

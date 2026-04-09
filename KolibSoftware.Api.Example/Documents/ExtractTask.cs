@@ -1,5 +1,6 @@
 using Docnet.Core;
 using KolibSoftware.Api.Example.Models;
+using KolibSoftware.Api.Infra.Models;
 using KolibSoftware.Api.Infra.Repo;
 using KolibSoftware.Api.Infra.Tasks;
 using KolibSoftware.Api.Infra.Tasks.Attributes;
@@ -41,6 +42,7 @@ public sealed class ExtractTaskHandler(
     {
         if (!File.Exists(data.Path)) throw new FileNotFoundException("File not found", data.Path);
         var bytes = File.ReadAllBytes(data.Path);
+        var tasks = new List<TaskModel>();
         await foreach (var text in ExtractTextAsync(bytes))
         {
             var document = new DocumentModel
@@ -52,6 +54,8 @@ public sealed class ExtractTaskHandler(
             await repository.InsertAsync(document, cancellationToken);
             var summaryTask = await taskService.PublishAsync(new SummaryTask { Rid = document.Rid }, cancellationToken);
             var embedTask = await taskService.PublishAsync(new EmbedTask { Rid = document.Rid }, [summaryTask], cancellationToken);
+            tasks.Add(embedTask);
         }
+        await taskService.PublishAsync(new DocumentTask(), tasks, cancellationToken);
     }
 }
