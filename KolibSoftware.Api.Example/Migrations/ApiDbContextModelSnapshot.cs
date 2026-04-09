@@ -54,6 +54,9 @@ namespace KolibSoftware.Api.Example.Migrations
                     b.Property<Guid>("Rid")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Summary")
+                        .HasColumnType("text");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("tinytext");

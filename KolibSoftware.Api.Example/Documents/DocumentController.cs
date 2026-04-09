@@ -2,6 +2,7 @@ using KolibSoftware.Api.Example.Models;
 using KolibSoftware.Api.Infra.Events;
 using KolibSoftware.Api.Infra.Models;
 using KolibSoftware.Api.Infra.Repo;
+using KolibSoftware.Api.Infra.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KolibSoftware.Api.Example.Documents;
@@ -9,7 +10,8 @@ namespace KolibSoftware.Api.Example.Documents;
 [Route("api/[controller]")]
 public sealed class DocumentController(
     IQueryableRepository<DocumentModel> repository,
-    IEventService eventService
+    IEventService eventService,
+    ITaskService taskService
 ) : ControllerBase()
 {
 
@@ -70,4 +72,14 @@ public sealed class DocumentController(
         return NoContent();
     }
 
+    [HttpPost("upload")]
+    public async Task<IActionResult> Upload()
+    {
+        Directory.CreateDirectory("files");
+        var path = Path.Combine("files", $"{Guid.NewGuid()}.pdf");
+        using (var stream = new FileStream(path, FileMode.Create))
+            await Request.Body.CopyToAsync(stream);
+        await taskService.PublishAsync(new ExtractTask { Path = path });
+        return Ok();
+    }
 }

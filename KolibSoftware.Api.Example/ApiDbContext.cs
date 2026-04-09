@@ -31,6 +31,7 @@ public class ApiDbContext(DbContextOptions<ApiDbContext> options) : DbContext(op
 
             entity.Property(e => e.Title).IsTinyText().IsRequired();
             entity.Property(e => e.Content).IsText().IsRequired();
+            entity.Property(e => e.Summary).IsText();
             entity.Property(e => e.Embedding).IsVector(DocumentModel.EmptyEmbedding.Length).IsRequired();
 
             // entity.HasIndex(e => e.Embedding).IsVector();

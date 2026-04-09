@@ -13,7 +13,7 @@ public class DocumentQuery : IPageQuery<DocumentModel>
     public IQueryable<DocumentModel> Apply(IQueryable<DocumentModel> queryable)
     {
         if (!string.IsNullOrEmpty(Hint))
-            queryable = queryable.Where(d => d.Title.Contains(Hint) || d.Content.Contains(Hint));
+            queryable = queryable.Where(d => d.Title.Contains(Hint) || d.Content != null && d.Content.Contains(Hint));
         return queryable;
     }
 }

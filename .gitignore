@@ -58,3 +58,6 @@ appsettings.*.json
 
 # http
 *.http
+
+# pdf
+*.pdf

@@ -1,4 +1,5 @@
 using KolibSoftware.Api.Example;
+using KolibSoftware.Api.Example.Services;
 using KolibSoftware.Api.Infra.Events;
 using KolibSoftware.Api.Infra.Events.Attributes;
 using KolibSoftware.Api.Infra.Repo;
@@ -23,6 +24,8 @@ builder.Services.AddDbContext<DbContext, ApiDbContext>(options =>
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped(typeof(IQueryableRepository<>), typeof(QueryableRepository<>));
 builder.Services.AddControllers();
+builder.Services.AddTransient<OllamaService>();
+builder.Services.AddTransient<BitNetService>();
 builder.AddEvents();
 builder.AddTasks();
 
