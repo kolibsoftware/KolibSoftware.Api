@@ -23,12 +23,13 @@ public static class EventUtils
         builder.Services.AddScoped<IEventService, EventService>();
         builder.Services.Configure<EventWorkerSettings>(builder.Configuration.GetSection("EventWorker"));
         builder.Services.AddHostedService<EventWorker>();
-        var types = EventHandlerRegistry.GetHandlerTypes();
+        var types = EventRegistry.GetEventTypes();
         foreach (var type in types)
         {
-            var handlers = EventHandlerRegistry.GetTypeHandlers(type);
+            var eventName = EventRegistry.GetEventName(type) ?? throw new InvalidOperationException($"Event type {type.FullName} does not have a registered event name");
+            var handlers = EventHandlerRegistry.GetHandlerTypes(eventName);
             foreach (var handler in handlers)
-                builder.Services.AddTransient(handler, type);
+                builder.Services.AddKeyedScoped(typeof(IEventHandler), eventName, handler);
         }
         return builder;
     }

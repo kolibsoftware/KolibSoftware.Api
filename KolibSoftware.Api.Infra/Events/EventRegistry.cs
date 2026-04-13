@@ -10,7 +10,6 @@ namespace KolibSoftware.Api.Infra.Events;
 public static class EventRegistry
 {
     private static readonly Dictionary<string, Type> _eventTypes;
-    private static readonly Dictionary<Type, string> _eventNames;
 
     static EventRegistry()
     {
@@ -20,11 +19,10 @@ public static class EventRegistry
             .Where(t => !t.IsAbstract && !t.IsInterface && t.GetCustomAttribute<EventAttribute>() != null)
             .Select(t => new
             {
-                Name = t.GetCustomAttribute<EventAttribute>()?.Name ?? t.Name,
+                Attribute = t.GetCustomAttribute<EventAttribute>()!,
                 Type = t
             });
-        _eventTypes = pairs.ToDictionary(p => p.Name, p => p.Type);
-        _eventNames = pairs.ToDictionary(p => p.Type, p => p.Name);
+        _eventTypes = pairs.ToDictionary(p => p.Attribute.EventName ?? p.Type.Name, p => p.Type);
     }
 
     /// <summary>
@@ -32,7 +30,7 @@ public static class EventRegistry
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    public static string? GetEventName(Type type) => _eventNames.GetValueOrDefault(type);
+    public static string? GetEventName(Type type) => _eventTypes.FirstOrDefault(kv => kv.Value == type).Key;
 
     /// <summary>
     /// Gets the event type corresponding to a given string name based on the [Event] attribute, or returns null if the name is not registered as an event. This is used for deserializing and dispatching events from the event store.
@@ -51,5 +49,5 @@ public static class EventRegistry
     /// Gets all registered event types and their corresponding string names in the system, which can be used for diagnostics, monitoring, or dynamic event handling scenarios.
     /// </summary>
     /// <returns></returns>
-    public static IEnumerable<Type> GetEventTypes() => _eventNames.Keys;
+    public static IEnumerable<Type> GetEventTypes() => _eventTypes.Values;
 }

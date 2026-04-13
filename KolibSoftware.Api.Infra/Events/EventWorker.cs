@@ -73,15 +73,7 @@ public sealed class EventWorker(
             return EventStatus.Failure;
         }
 
-        var data = @event.Data.Deserialize(eventType);
-        if (data == null)
-        {
-            logger.LogFailedToDeserializeEventData(@event.Name, eventType.FullName!);
-            return EventStatus.Failure;
-        }
-
-        var handlerType = typeof(IEventHandler<>).MakeGenericType(eventType);
-        var handlers = serviceProvider.GetServices(handlerType).Cast<IEventHandler>().ToList();
+        var handlers = serviceProvider.GetKeyedServices<IEventHandler>(@event.Name).ToList();
         if (handlers.Count == 0)
         {
             logger.LogNoEventHandlersFound(@event.Name);
@@ -93,7 +85,7 @@ public sealed class EventWorker(
         {
             try
             {
-                await handler.HandleEventAsync(data, cancellationToken);
+                await handler.HandleEventAsync(@event, cancellationToken);
                 successCount++;
             }
             catch (Exception ex)

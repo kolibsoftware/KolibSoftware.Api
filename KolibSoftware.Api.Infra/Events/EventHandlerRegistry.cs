@@ -8,56 +8,53 @@ namespace KolibSoftware.Api.Infra.Events;
 /// </summary>
 public static class EventHandlerRegistry
 {
-    private static readonly Dictionary<Type, IEnumerable<Type>> _handlerTypes;
-    private static readonly Dictionary<Type, IEnumerable<Type>> _typeHandlers;
+    private static readonly Dictionary<string, IEnumerable<Type>> _handlerTypes;
 
     static EventHandlerRegistry()
     {
         var pairs = AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => a.GetCustomAttribute<EnableEventsAttribute>() != null)
             .SelectMany(a => a.GetTypes())
-            .Where(t => !t.IsAbstract && !t.IsInterface && t.GetCustomAttribute<EventHandlerAttribute>() != null)
-            .SelectMany(t => t.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEventHandler<>))
-                .Select(i => new
-                {
-                    Handler = i,
-                    Type = t
-                })
-            );
+            .Where(t => !t.IsAbstract && !t.IsInterface && t.GetCustomAttribute<BaseEventHandlerAttribute>() != null && t.IsAssignableTo(typeof(IEventHandler)))
+            .Select(t => new
+            {
+                Attribute = t.GetCustomAttribute<BaseEventHandlerAttribute>()!,
+                Type = t
+            });
 
-        _handlerTypes = pairs
-            .GroupBy(p => p.Handler)
+        _handlerTypes = pairs.GroupBy(p => p.Attribute.EventName)
             .ToDictionary(g => g.Key, g => g.Select(p => p.Type));
 
-        _typeHandlers = pairs
-            .GroupBy(p => p.Type)
-            .ToDictionary(g => g.Key, g => g.Select(p => p.Handler));
     }
 
     /// <summary>
-    /// Gets all registered event handler types in the application, which can be used for diagnostics or dynamic registration in the dependency injection container.
+    /// Gets the string name of an event handler type based on the [EventHandler] attribute, or returns null if the type is not registered as an event handler. This is used for storing and querying event handlers in the event broker.
+    /// Note that event handler only can be registered for a single event name, so this method returns a single event name corresponding to the given handler type, or null if no match is found. For lookup of handler types corresponding to a given event name, use GetHandlerTypes(string eventName) instead.
     /// </summary>
+    /// <param name="handlerType"></param>
     /// <returns></returns>
-    public static IEnumerable<Type> GetHandlerTypes() => _typeHandlers.Keys;
+    public static string? GetEventName(Type handlerType) => _handlerTypes.FirstOrDefault(kv => kv.Value.Contains(handlerType)).Key;
+
 
     /// <summary>
-    /// Gets the event types that a given handler type is registered to handle, which can be used for diagnostics or dynamic registration in the dependency injection container.
+    /// Gets the event handler types corresponding to a given string event name based on the [EventHandler] attribute, or returns an empty enumerable if the name is not registered as an event handler. This is used for looking up and invoking event handlers for a given event name in the event broker.
+    /// Note that multiple event handler types may be registered for the same event name, so this method returns all matching handler types, or an empty enumerable if no match is found. For lookup of the event name corresponding to a given handler type, use GetEventName(Type handlerType) instead.
     /// </summary>
+    /// <param name="eventName"></param>
     /// <returns></returns>
-    public static IEnumerable<Type> GetTypeHandlers() => _handlerTypes.Keys;
+    public static IEnumerable<Type> GetHandlerTypes(string eventName) => _handlerTypes.GetValueOrDefault(eventName) ?? [];
 
     /// <summary>
-    /// Gets the handler types that are registered to handle a specific event type, which can be used by the event broker service to dispatch events to the correct handlers.
+    /// Gets all registered event handler names in the system, which can be used for diagnostics, monitoring, or dynamic event handling scenarios.
+    /// Note that multiple handler types may be registered for the same event name, so this method returns distinct event names corresponding to registered handlers.
     /// </summary>
-    /// <param name="handler"></param>
     /// <returns></returns>
-    public static IEnumerable<Type> GetHandlerTypes(Type handler) => _handlerTypes.GetValueOrDefault(handler) ?? [];
+    public static IEnumerable<string> GetEventNames() => _handlerTypes.Keys;
 
     /// <summary>
-    /// Gets the event types that a given handler type is registered to handle, which can be used by the event broker service to dispatch events to the correct handlers.
+    /// Gets all registered event handler types in the system, which can be used for diagnostics, monitoring, or dynamic event handling scenarios.
+    /// Note that event handler only can be registered for a single event name, so this method returns a single event name corresponding to the given handler type, or null if no match is found. For lookup of handler types corresponding to a given event name, use GetHandlerTypes(string eventName) instead.
     /// </summary>
-    /// <param name="type"></param>
     /// <returns></returns>
-    public static IEnumerable<Type> GetTypeHandlers(Type type) => _typeHandlers.GetValueOrDefault(type) ?? [];
-
+    public static IEnumerable<Type> GetHandlerTypes() => _handlerTypes.Values.SelectMany(v => v);
 }
