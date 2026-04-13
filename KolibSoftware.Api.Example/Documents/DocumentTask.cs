@@ -1,16 +1,20 @@
+using System.Text.Json;
+using KolibSoftware.Api.Infra.Models;
 using KolibSoftware.Api.Infra.Tasks;
 using KolibSoftware.Api.Infra.Tasks.Attributes;
 
 namespace KolibSoftware.Api.Example.Documents;
 
 [Task]
-public class DocumentTask {}
+public class DocumentTask { }
 
-[TaskHandler]
-public class DocumentTaskHandler() : ITaskHandler<DocumentTask>
+[TaskHandler<DocumentTask>]
+public class DocumentTaskHandler() : ITaskHandler
 {
-    public Task HandleTaskAsync(DocumentTask task, CancellationToken cancellationToken = default)
+    public Task<bool> HandleTaskAsync(TaskModel model, CancellationToken cancellationToken = default)
     {
-        return Task.CompletedTask;
+        var extractTask =  model.Dependencies.FirstOrDefault(x => x.Dependency.Name == TaskRegistry.GetTaskName(typeof(ExtractTask)))?.Dependency?.Data.Deserialize<ExtractTask>();
+        if (extractTask == null) return Task.FromResult(false);
+        return Task.FromResult(true);
     }
 }

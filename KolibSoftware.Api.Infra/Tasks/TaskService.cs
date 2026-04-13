@@ -1,4 +1,3 @@
-using System.Text.Json;
 using KolibSoftware.Api.Infra.Models;
 using KolibSoftware.Api.Infra.Repo;
 
@@ -14,28 +13,13 @@ public class TaskService(
 {
 
     /// <summary>
-    /// Publishes a task to the task worker. This method takes a task of a specific type and an optional cancellation token, and it is responsible for adding the task to the task store or queue for later processing by the task worker. The task type must be registered in the task registry for it to be published successfully.
+    /// Publishes a task model to the task store. This method takes a TaskModel instance, which contains the task name, serialized task data, timestamps, status, and dependencies, and saves it to the task store using the repository. The method is asynchronous and can be cancelled using a CancellationToken. Once the task is published, it will be available for processing by the task worker, which will execute it based on its dependencies and status.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="task"></param>
-    /// <param name="dependencies">A collection of task models that the current task depends on. These tasks must be completed before the current task can be executed.</param>
+    /// <param name="model"></param>
     /// <param name="cancellationToken"></param>
-    /// <returns>The created TaskModel representing the published task.</returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    public async Task<TaskModel> PublishAsync<T>(T @task, IEnumerable<TaskModel> dependencies, CancellationToken cancellationToken = default) where T : notnull
+    /// <returns></returns>
+    public async Task PublishAsync(TaskModel model, CancellationToken cancellationToken = default)
     {
-        var taskName = TaskRegistry.GetTaskName(typeof(T)) ?? throw new InvalidOperationException($"Task type {typeof(T).FullName} is not registered in TaskRegistry.");
-        var _task = new TaskModel
-        {
-            Rid = Guid.CreateVersion7(),
-            Name = taskName,
-            Data = JsonSerializer.SerializeToNode(@task)!,
-            CreatedAt = DateTime.UtcNow,
-            Status = Models.TaskStatus.Pending,
-            HandledAt = null,
-            Dependencies = [.. dependencies.Select(x => new TaskDependency { DependencyId = x.Id })]
-        };
-        await repository.InsertAsync(_task, cancellationToken);
-        return _task;
+        await repository.InsertAsync(model, cancellationToken);
     }
 }

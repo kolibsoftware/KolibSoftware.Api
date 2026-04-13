@@ -1,3 +1,4 @@
+using System.Text.Json;
 using KolibSoftware.Api.Infra.Models;
 using KolibSoftware.Api.Infra.Repo;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,18 +11,6 @@ namespace KolibSoftware.Api.Infra.Tasks;
 /// </summary>
 public static class TaskUtils
 {
-
-    /// <summary>
-    /// Extension method to publish a task without dependencies to the task worker. This method simplifies the process of publishing a task by allowing the caller to omit the dependencies parameter when there are no dependencies for the task. It internally calls the PublishAsync method of the ITaskService with an empty list of dependencies.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="taskService"></param>
-    /// <param name="task"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    public static Task<TaskModel> PublishAsync<T>(this ITaskService taskService, T task, CancellationToken cancellationToken = default)
-        where T : notnull
-        => taskService.PublishAsync(task, [], cancellationToken);
 
     /// <summary>
     /// Extension method to add task worker services and handlers to the application host builder. This method configures the task worker settings, registers the task service, and discovers and registers all task handler types in the application assembly.
@@ -38,11 +27,64 @@ public static class TaskUtils
         var types = TaskHandlerRegistry.GetHandlerTypes();
         foreach (var type in types)
         {
-            var handlers = TaskHandlerRegistry.GetTypeHandlers(type);
-            foreach (var handler in handlers)
-                builder.Services.AddTransient(handler, type);
+            var taskName = TaskHandlerRegistry.GetTaskName(type) ?? throw new InvalidOperationException($"Task handler type {type.FullName} does not have a registered task name");
+            var handler = TaskHandlerRegistry.GetHandlerType(taskName) ?? throw new InvalidOperationException($"Task name {taskName} does not have a registered handler type");
+            builder.Services.AddKeyedScoped(typeof(ITaskHandler), taskName, handler);
         }
         return builder;
     }
+
+    /// <summary>
+    /// Publishes a task of a specific type to the task worker. This method creates a TaskItem instance from the provided task data, converts it into a TaskModel, and then calls the PublishAsync method of the ITaskService to store it in the task store. The task type must be registered in the TaskRegistry for it to be published successfully. This method provides a convenient way to publish tasks directly from their data representation without needing to manually create TaskItem instances, allowing for streamlined task publishing in the application.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="taskService"></param>
+    /// <param name="task"></param>
+    /// <param name="dependencies"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    public static async Task<TaskModel> PublishAsync<T>(this ITaskService taskService, T task, IEnumerable<TaskModel> dependencies, CancellationToken cancellationToken = default)
+        where T : notnull
+    {
+        var model = new TaskModel
+        {
+            Rid = Guid.CreateVersion7(),
+            Name = TaskRegistry.GetTaskName(typeof(T)) ?? throw new InvalidOperationException($"Task type {typeof(T).FullName} is not registered in TaskRegistry."),
+            Data = JsonSerializer.SerializeToNode(task)!,
+            CreatedAt = DateTime.UtcNow,
+            Status = Models.TaskStatus.Pending,
+            HandledAt = null,
+            Dependencies = [.. dependencies.Select(d => new TaskDependency { Dependency = d })]
+        };
+        await taskService.PublishAsync(model, cancellationToken);
+        return model;
+    }
+
+    /// <summary>
+    /// Publishes a TaskItem to the task worker. This method converts the TaskItem into a TaskModel using the ToModel method and then calls the PublishAsync method of the ITaskService to store the task in the task store. The TaskItem encapsulates the task data and its dependencies, allowing for structured representation of tasks and their relationships. This method provides a convenient way to publish tasks that are defined as TaskItem instances, which can include complex workflows with multiple dependencies. The task type of the TaskItem must be registered in the TaskRegistry for it to be published successfully.
+    /// </summary>
+    /// <param name="taskService"></param>
+    /// <param name="taskItem"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public static async Task<TaskModel> PublishAsync(this ITaskService taskService, TaskItem taskItem, CancellationToken cancellationToken = default)
+    {
+        var model = taskItem.ToModel();
+        await taskService.PublishAsync(model, cancellationToken);
+        return model;
+    }
+
+    /// <summary>
+    /// Publishes a task of a specific type to the task worker. This method creates a TaskItem instance from the provided task data, converts it into a TaskModel, and then calls the PublishAsync method of the ITaskService to store it in the task store. The task type must be registered in the TaskRegistry for it to be published successfully. This method provides a convenient way to publish tasks directly from their data representation without needing to manually create TaskItem instances, allowing for streamlined task publishing in the application.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="taskService"></param>
+    /// <param name="task"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public static Task<TaskModel> PublishAsync<T>(this ITaskService taskService, T task, CancellationToken cancellationToken = default)
+        where T : notnull
+        => PublishAsync(taskService, new TaskItem { Task = task }, cancellationToken);
 
 }

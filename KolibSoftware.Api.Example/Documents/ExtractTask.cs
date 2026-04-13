@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Docnet.Core;
 using KolibSoftware.Api.Example.Models;
 using KolibSoftware.Api.Infra.Models;
@@ -12,13 +13,13 @@ namespace KolibSoftware.Api.Example.Documents;
 public class ExtractTask
 {
     public string Path { get; set; } = string.Empty;
+    public IEnumerable<Guid>? DocumentIds { get; set; }
 }
 
-[TaskHandler]
+[TaskHandler<ExtractTask>]
 public sealed class ExtractTaskHandler(
-    IRepository<DocumentModel> repository,
-    ITaskService taskService
-) : ITaskHandler<ExtractTask>
+    IRepository<DocumentModel> repository
+) : ITaskHandler
 {
 
     private static async IAsyncEnumerable<string> ExtractTextAsync(byte[] pdf)
@@ -38,24 +39,25 @@ public sealed class ExtractTaskHandler(
             yield return text;
     }
 
-    public async Task HandleTaskAsync(ExtractTask data, CancellationToken cancellationToken = default)
+    public async Task<bool> HandleTaskAsync(TaskModel model, CancellationToken cancellationToken = default)
     {
-        if (!File.Exists(data.Path)) throw new FileNotFoundException("File not found", data.Path);
-        var bytes = File.ReadAllBytes(data.Path);
-        var tasks = new List<TaskModel>();
+        var task = model.Data.Deserialize<ExtractTask>() ?? throw new InvalidOperationException("Failed to deserialize task data");
+        if (!File.Exists(task.Path)) throw new FileNotFoundException("File not found", task.Path);
+        var bytes = File.ReadAllBytes(task.Path);
+        var documentIds = new List<Guid>();
         await foreach (var text in ExtractTextAsync(bytes))
         {
             var document = new DocumentModel
             {
                 Rid = Guid.NewGuid(),
-                Title = text.Length > 100 ? text[..100] : text,
+                Title = $"Document extracted from {Path.GetFileName(task.Path)}",
                 Content = text
             };
             await repository.InsertAsync(document, cancellationToken);
-            var summaryTask = await taskService.PublishAsync(new SummaryTask { Rid = document.Rid }, cancellationToken);
-            var embedTask = await taskService.PublishAsync(new EmbedTask { Rid = document.Rid }, [summaryTask], cancellationToken);
-            tasks.Add(embedTask);
+            documentIds.Add(document.Rid);
         }
-        await taskService.PublishAsync(new DocumentTask(), tasks, cancellationToken);
+        task.DocumentIds = documentIds;
+        model.Data = JsonSerializer.Serialize(task);
+        return true;
     }
 }

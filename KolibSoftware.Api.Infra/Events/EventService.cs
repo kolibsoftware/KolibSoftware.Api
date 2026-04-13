@@ -14,26 +14,13 @@ public class EventService(
 {
 
     /// <summary>
-    /// Publishes an event to the event broker. This method takes an event of a specific type and an optional cancellation token, and it is responsible for adding the event to the event store or queue for later processing by the event worker. The event type must be registered in the event registry for it to be published successfully.
+    /// Publishes an event model to the event store. This method takes an EventModel instance, which contains the event name, serialized event data, timestamps, and status, and saves it to the event store using the repository. The method is asynchronous and can be cancelled using a CancellationToken. Once the event is published, it will be available for processing by the event worker, which will dispatch it to the appropriate handlers based on the event name.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="event"></param>
+    /// <param name="model"></param>
     /// <param name="cancellationToken"></param>
-    /// <returns>The created EventModel representing the published event.</returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    public async Task<EventModel> PublishAsync<T>(T @event, CancellationToken cancellationToken = default) where T : notnull
+    /// <returns></returns>
+    public async Task PublishAsync(EventModel model, CancellationToken cancellationToken = default)
     {
-        var eventName = EventRegistry.GetEventName(typeof(T)) ?? throw new InvalidOperationException($"Event type {typeof(T).FullName} is not registered in EventRegistry.");
-        var _event = new EventModel
-        {
-            Rid = Guid.CreateVersion7(),
-            Name = eventName,
-            Data = JsonSerializer.SerializeToNode(@event)!,
-            CreatedAt = DateTime.UtcNow,
-            Status = EventStatus.Pending,
-            HandledAt = null
-        };
-        await repository.InsertAsync(_event, cancellationToken);
-        return _event;
+        await repository.InsertAsync(model, cancellationToken);
     }
 }

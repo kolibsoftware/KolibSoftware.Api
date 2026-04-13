@@ -73,15 +73,7 @@ public sealed class TaskWorker(
             return Models.TaskStatus.Failure;
         }
 
-        var data = task.Data.Deserialize(taskType);
-        if (data == null)
-        {
-            logger.LogFailedToDeserializeTaskData(task.Name, taskType.FullName!);
-            return Models.TaskStatus.Failure;
-        }
-
-        var handlerType = typeof(ITaskHandler<>).MakeGenericType(taskType);
-        var handlers = serviceProvider.GetServices(handlerType).Cast<ITaskHandler>().ToList();
+        var handlers = serviceProvider.GetKeyedServices<ITaskHandler>(task.Name).ToList();
         if (handlers.Count != 1)
         {
             logger.LogInvalidNumberOfTaskHandlers(task.Name, handlers.Count);
@@ -91,8 +83,8 @@ public sealed class TaskWorker(
         var handler = handlers.First();
         try
         {
-            await handler.HandleTaskAsync(data, cancellationToken);
-            return Models.TaskStatus.Success;
+            var complete = await handler.HandleTaskAsync(task, cancellationToken);
+            return complete ? Models.TaskStatus.Success : Models.TaskStatus.Pending;
         }
         catch (Exception ex)
         {

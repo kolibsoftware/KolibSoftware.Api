@@ -1,3 +1,4 @@
+using System.Text.Json;
 using KolibSoftware.Api.Infra.Models;
 using KolibSoftware.Api.Infra.Repo;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,5 +33,29 @@ public static class EventUtils
                 builder.Services.AddKeyedScoped(typeof(IEventHandler), eventName, handler);
         }
         return builder;
+    }
+
+    /// <summary>
+    /// Publishes an event of a specific type to the event broker. This method creates an EventModel instance with the appropriate properties, including the event name, serialized event data, and timestamps, and then calls the PublishAsync method of the IEventService to store the event in the event store. The event type must be registered in the EventRegistry for it to be published successfully.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="eventService"></param>
+    /// <param name="event"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    public static async Task<EventModel> PublishAsync<T>(this IEventService eventService, T @event, CancellationToken cancellationToken = default) where T : notnull
+    {
+        var model = new EventModel
+        {
+            Rid = Guid.CreateVersion7(),
+            Name = EventRegistry.GetEventName(typeof(T)) ?? throw new InvalidOperationException($"Event type {typeof(T).FullName} is not registered in EventRegistry."),
+            Data = JsonSerializer.SerializeToNode(@event)!,
+            CreatedAt = DateTime.UtcNow,
+            Status = EventStatus.Pending,
+            HandledAt = null
+        };
+        await eventService.PublishAsync(model, cancellationToken);
+        return model;
     }
 }

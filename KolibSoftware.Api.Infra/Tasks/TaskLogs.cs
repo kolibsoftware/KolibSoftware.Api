@@ -23,13 +23,6 @@ public static partial class TaskLogs
     public static partial void LogUnregisteredTaskType(this ILogger logger, string taskType);
 
     [LoggerMessage(
-        EventId = 5,
-        Level = LogLevel.Error,
-        Message = "Failed to deserialize task data for task type: {taskType}, expected type: {expectedType}"
-    )]
-    public static partial void LogFailedToDeserializeTaskData(this ILogger logger, string taskType, string expectedType);
-
-    [LoggerMessage(
         EventId = 2,
         Level = LogLevel.Warning,
         Message = "Invalid number of task handlers for task type: {taskType}, must be 1 found: {handlerCount}"

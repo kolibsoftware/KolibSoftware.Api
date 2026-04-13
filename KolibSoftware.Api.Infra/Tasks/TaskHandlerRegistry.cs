@@ -8,8 +8,7 @@ namespace KolibSoftware.Api.Infra.Tasks;
 /// </summary>
 public static class TaskHandlerRegistry
 {
-    private static readonly Dictionary<Type, IEnumerable<Type>> _handlerTypes;
-    private static readonly Dictionary<Type, IEnumerable<Type>> _typeHandlers;
+    private static readonly Dictionary<string, Type> _handlerTypes;
 
     static TaskHandlerRegistry()
     {
@@ -17,47 +16,43 @@ public static class TaskHandlerRegistry
             .Where(a => a.GetCustomAttribute<EnableTasksAttribute>() != null)
             .SelectMany(a => a.GetTypes())
             .Where(t => !t.IsAbstract && !t.IsInterface && t.GetCustomAttribute<TaskHandlerAttribute>() != null)
-            .SelectMany(t => t.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ITaskHandler<>))
-                .Select(i => new
-                {
-                    Handler = i,
-                    Type = t
-                })
-            );
+            .Select(t => new
+            {
+                Attribute = t.GetCustomAttribute<TaskHandlerAttribute>()!,
+                Type = t
+            });
 
-        _handlerTypes = pairs
-            .GroupBy(p => p.Handler)
-            .ToDictionary(g => g.Key, g => g.Select(p => p.Type));
-
-        _typeHandlers = pairs
-            .GroupBy(p => p.Type)
-            .ToDictionary(g => g.Key, g => g.Select(p => p.Handler));
+        _handlerTypes = pairs.ToDictionary(p => p.Attribute.TaskName, p => p.Type);
     }
 
     /// <summary>
-    /// Gets all registered task handler types in the application, which can be used for diagnostics or dynamic registration in the dependency injection container.
+    /// Gets the string name of a task handler type based on the [TaskHandler] attribute, or returns null if the type is not registered as a task handler. This is used for storing and querying task handlers in the task broker.
+    /// Note that task handler only can be registered for a single task name, so this method returns a single task name corresponding to the given handler type, or null if no match is found. For lookup of handler types corresponding to a given task name, use GetHandlerTypes(string taskName) instead.
     /// </summary>
+    /// <param name="handlerType"></param>
     /// <returns></returns>
-    public static IEnumerable<Type> GetHandlerTypes() => _typeHandlers.Keys;
+    public static string? GetTaskName(Type handlerType) => _handlerTypes.FirstOrDefault(kv => kv.Value == handlerType).Key;
 
     /// <summary>
-    /// Gets the task types that a given handler type is registered to handle, which can be used for diagnostics or dynamic registration in the dependency injection container.
+    /// Gets the handler type that is registered to handle a specific task name, which can be used by the task broker service to dispatch tasks to the correct handlers.
+    /// Note that task handler only can be registered for a single task name, so this method returns a single handler type corresponding to the given task name, or null if no match is found. For lookup of the task name corresponding to a given handler type, use GetTaskName(Type handlerType) instead.
     /// </summary>
+    /// <param name="taskName"></param>
     /// <returns></returns>
-    public static IEnumerable<Type> GetTypeHandlers() => _handlerTypes.Keys;
+    public static Type? GetHandlerType(string taskName) => _handlerTypes.GetValueOrDefault(taskName);
 
     /// <summary>
-    /// Gets the handler types that are registered to handle a specific task type, which can be used by the task broker service to dispatch tasks to the correct handlers.
+    /// Gets all registered task handler names in the system, which can be used for diagnostics, monitoring, or dynamic task handling scenarios.
+    /// Note that task handler only can be registered for a single task name, so this method returns all task names corresponding to the registered handler types.
     /// </summary>
-    /// <param name="handler"></param>
     /// <returns></returns>
-    public static IEnumerable<Type> GetHandlerTypes(Type handler) => _handlerTypes.GetValueOrDefault(handler) ?? [];
+    public static IEnumerable<string> GetTaskNames() => _handlerTypes.Keys;
 
     /// <summary>
-    /// Gets the task types that a given handler type is registered to handle, which can be used by the task broker service to dispatch tasks to the correct handlers.
+    /// Gets all registered task handler types in the system, which can be used for diagnostics, monitoring, or dynamic task handling scenarios.
+    /// Note that task handler only can be registered for a single task name, so this method returns a single task name corresponding to the given handler type, or null if no match is found. For lookup of handler types corresponding to a given task name, use GetHandlerType(string taskName) instead.
     /// </summary>
-    /// <param name="type"></param>
     /// <returns></returns>
-    public static IEnumerable<Type> GetTypeHandlers(Type type) => _typeHandlers.GetValueOrDefault(type) ?? [];
+    public static IEnumerable<Type> GetHandlerTypes() => _handlerTypes.Values;
 
 }
