@@ -48,8 +48,8 @@ namespace KolibSoftware.Api.Example.Migrations
 
                     b.Property<byte[]>("Embedding")
                         .IsRequired()
-                        .HasColumnType("vector(2560)")
-                        .HasAnnotation("MariaDB:VectorColumn", "VECTOR(2560)");
+                        .HasColumnType("vector(768)")
+                        .HasAnnotation("MariaDB:VectorColumn", "VECTOR(768)");
 
                     b.Property<Guid>("Rid")
                         .HasColumnType("uuid");

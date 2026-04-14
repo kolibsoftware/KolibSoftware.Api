@@ -18,7 +18,7 @@ public class OllamaService(string host = "http://server.lan:11434")
     {
         var response = await Client.EmbedAsync(new EmbedRequest
         {
-            Model = "qwen3-embedding:4b-q4_K_M",
+            Model = "nomic-embed-text",
             Input = [.. text]
         });
         return response.Embeddings;

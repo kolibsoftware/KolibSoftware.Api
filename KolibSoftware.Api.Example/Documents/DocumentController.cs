@@ -89,6 +89,25 @@ public sealed class DocumentController(
         return Ok();
     }
 
+    [HttpGet("distance")]
+    public async Task<IActionResult> QueryFragments([FromQuery] string query)
+    {
+        var queryEmbedding = await ollamaService.EmbedAsync(query);
+        var documents = await context.Documents
+            .OrderBy(d => DatabaseUtils.VecDistance(d.Embedding, queryEmbedding))
+            .Take(5)
+            .ToListAsync();
+        return Ok(new
+        {
+            documents = documents.Select(d => new
+            {
+                d.Rid,
+                d.Title,
+                d.Summary,
+            })
+        });
+    }
+
     [HttpGet("search")]
     public async Task<IActionResult> QueryTextDocuments([FromQuery] string query)
     {
