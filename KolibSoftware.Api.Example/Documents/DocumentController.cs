@@ -95,7 +95,7 @@ public sealed class DocumentController(
         var queryEmbedding = await ollamaService.EmbedAsync(query);
         var documents = await context.Documents
             .OrderBy(d => DatabaseUtils.VecDistance(d.Embedding, queryEmbedding))
-            .Take(5)
+            .Take(3)
             .ToListAsync();
         return Ok(new
         {
