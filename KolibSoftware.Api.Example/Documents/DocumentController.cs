@@ -89,7 +89,7 @@ public sealed class DocumentController(
         {
             Task = new DocumentTask(),
             Dependencies = [
-                new TaskItem { Task = new ExtractTask { Path = path } }
+                new TaskItem { Task = new ExtractTask { InputPath = path } }
             ]
         });
         return Ok();

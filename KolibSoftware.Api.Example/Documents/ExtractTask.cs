@@ -12,8 +12,8 @@ namespace KolibSoftware.Api.Example.Documents;
 [Task]
 public class ExtractTask
 {
-    public string Path { get; set; } = string.Empty;
-    public IEnumerable<Guid>? DocumentIds { get; set; }
+    public string InputPath { get; set; } = string.Empty;
+    public IEnumerable<Guid>? OutputDocuments { get; set; }
 }
 
 [TaskHandler<ExtractTask>]
@@ -42,21 +42,21 @@ public sealed class ExtractTaskHandler(
     public async Task<bool> HandleTaskAsync(TaskModel model, CancellationToken cancellationToken = default)
     {
         var task = model.Data.Deserialize<ExtractTask>() ?? throw new InvalidOperationException("Failed to deserialize task data");
-        if (!File.Exists(task.Path)) throw new FileNotFoundException("File not found", task.Path);
-        var bytes = File.ReadAllBytes(task.Path);
+        if (!File.Exists(task.InputPath)) throw new FileNotFoundException("File not found", task.InputPath);
+        var bytes = File.ReadAllBytes(task.InputPath);
         var documentIds = new List<Guid>();
         await foreach (var text in ExtractTextAsync(bytes))
         {
             var document = new DocumentModel
             {
                 Rid = Guid.NewGuid(),
-                Title = $"Document extracted from {Path.GetFileName(task.Path)}",
+                Title = $"Document extracted from {Path.GetFileName(task.InputPath)}",
                 Content = text
             };
             await repository.InsertAsync(document, cancellationToken);
             documentIds.Add(document.Rid);
         }
-        task.DocumentIds = documentIds;
+        task.OutputDocuments = documentIds;
         model.Data = JsonSerializer.Serialize(task);
         return true;
     }
