@@ -16,7 +16,7 @@ public class SummaryTask
 [TaskHandler]
 public sealed class SummaryTaskHandler(
     IRepository<DocumentModel> repository,
-    BitNetService summaryService
+    OpenAIService summaryService
 ) : ITaskHandler<SummaryTask>
 {
 

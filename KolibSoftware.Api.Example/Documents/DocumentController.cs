@@ -17,6 +17,7 @@ public sealed class DocumentController(
     ITaskService taskService,
     OllamaService ollamaService,
     BitNetService bitNetService,
+    OpenAIService openAIService,
     ApiDbContext context
 ) : ControllerBase()
 {
@@ -117,7 +118,7 @@ public sealed class DocumentController(
             .Take(3)
             .ToListAsync();
         var prompt = $"Top 3 relevant documents:\n {string.Join("\n\n", documents.Select(d => $"- {d.Summary}"))}\n\nAnswer directly with the fewest words.\n\nQuestion: {query}\n\nAnswer:";
-        var response = await bitNetService.GenerateAsync(prompt);
+        var response = await openAIService.GenerateAsync(prompt);
         return Ok(new
         {
             response,
