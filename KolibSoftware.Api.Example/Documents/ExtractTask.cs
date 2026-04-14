@@ -11,6 +11,7 @@ namespace KolibSoftware.Api.Example.Documents;
 [Task]
 public class ExtractTask
 {
+    public string Progress { get; set; } = "0%";
     public string Path { get; set; } = string.Empty;
     public IEnumerable<Guid> DocumentIds { get; set; } = [];
 }
@@ -54,6 +55,7 @@ public sealed class ExtractTaskHandler(
             await repository.InsertAsync(document, cancellationToken);
             documentIds.Add(document.Rid);
         }
+        data.Progress = "100%";
         data.DocumentIds = documentIds;
         return TaskResult.Completed(data);
     }
