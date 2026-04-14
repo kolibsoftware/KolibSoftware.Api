@@ -114,9 +114,9 @@ public sealed class DocumentController(
         var queryEmbedding = await ollamaService.EmbedAsync(query);
         var documents = await context.Documents
             .OrderBy(d => DatabaseUtils.VecDistance(d.Embedding, queryEmbedding))
-            .Take(5)
+            .Take(3)
             .ToListAsync();
-        var prompt = $"Query: {query}\n\nTop 5 relevant documents:\n {string.Join("\n\n", documents.Select(d => $"- {d.Summary}"))}\n\nGenerate a response based on the query and the relevant documents.";
+        var prompt = $"Answer directly with the fewest words.\n\nQuery: {query}\n\nTop 3 relevant documents:\n {string.Join("\n\n", documents.Select(d => $"- {d.Summary}"))}\n\n";
         var response = await bitNetService.GenerateAsync(prompt);
         return Ok(new
         {
