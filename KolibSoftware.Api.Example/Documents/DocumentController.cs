@@ -85,7 +85,7 @@ public sealed class DocumentController(
         var path = Path.Combine("files", $"{Guid.NewGuid()}.pdf");
         using (var stream = new FileStream(path, FileMode.Create))
             await Request.Body.CopyToAsync(stream);
-        await taskService.PublishAsync(new ExtractTask { Path = path });
+        await taskService.PublishAsync(new DocumentTask { Path = path });
         return Ok();
     }
 

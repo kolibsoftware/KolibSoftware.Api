@@ -77,7 +77,7 @@ namespace KolibSoftware.Api.Example.Migrations
                     Data = table.Column<string>(type: "json", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     HandledAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
-                    Status = table.Column<string>(type: "enum('Pending','Success','Cancelled','Failure')", nullable: false)
+                    Status = table.Column<string>(type: "enum('Pending','Completed','Cancelled','Failed')", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>

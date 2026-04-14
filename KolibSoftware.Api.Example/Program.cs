@@ -26,6 +26,7 @@ builder.Services.AddScoped(typeof(IQueryableRepository<>), typeof(QueryableRepos
 builder.Services.AddControllers();
 builder.Services.AddTransient<OllamaService>();
 builder.Services.AddTransient<BitNetService>();
+builder.Services.AddTransient<LocalAiService>();
 builder.AddEvents();
 builder.AddTasks();
 

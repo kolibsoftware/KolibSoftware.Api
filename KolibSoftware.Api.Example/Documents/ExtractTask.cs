@@ -12,12 +12,12 @@ namespace KolibSoftware.Api.Example.Documents;
 public class ExtractTask
 {
     public string Path { get; set; } = string.Empty;
+    public IEnumerable<Guid> DocumentIds { get; set; } = [];
 }
 
 [TaskHandler]
 public sealed class ExtractTaskHandler(
-    IRepository<DocumentModel> repository,
-    ITaskService taskService
+    IRepository<DocumentModel> repository
 ) : ITaskHandler<ExtractTask>
 {
 
@@ -38,24 +38,23 @@ public sealed class ExtractTaskHandler(
             yield return text;
     }
 
-    public async Task HandleTaskAsync(ExtractTask data, CancellationToken cancellationToken = default)
+    public async Task<ITaskResult> HandleTaskAsync(ExtractTask data, IEnumerable<object> dependencies, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(data.Path)) throw new FileNotFoundException("File not found", data.Path);
         var bytes = File.ReadAllBytes(data.Path);
-        var tasks = new List<TaskModel>();
+        var documentIds = new List<Guid>();
         await foreach (var text in ExtractTextAsync(bytes))
         {
             var document = new DocumentModel
             {
                 Rid = Guid.NewGuid(),
-                Title = text.Length > 100 ? text[..100] : text,
+                Title = $"Extracted from {data.Path}",
                 Content = text
             };
             await repository.InsertAsync(document, cancellationToken);
-            var summaryTask = await taskService.PublishAsync(new SummaryTask { Rid = document.Rid }, cancellationToken);
-            var embedTask = await taskService.PublishAsync(new EmbedTask { Rid = document.Rid }, [summaryTask], cancellationToken);
-            tasks.Add(embedTask);
+            documentIds.Add(document.Rid);
         }
-        await taskService.PublishAsync(new DocumentTask(), tasks, cancellationToken);
+        data.DocumentIds = documentIds;
+        return TaskResult.Completed(data);
     }
 }

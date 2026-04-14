@@ -168,7 +168,7 @@ namespace KolibSoftware.Api.Example.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("enum('Pending','Success','Cancelled','Failure')");
+                        .HasColumnType("enum('Pending','Completed','Cancelled','Failed')");
 
                     b.HasKey("Id");
 

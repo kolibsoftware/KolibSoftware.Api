@@ -9,7 +9,8 @@ namespace KolibSoftware.Api.Example.Documents;
 [Task]
 public class EmbedTask
 {
-    public Guid Rid { get; set; }
+    public string Progress { get; set; } = "0%";
+    public IDictionary<Guid, bool> Documents { get; set; } = new Dictionary<Guid, bool>();
 }
 
 [TaskHandler]
@@ -19,12 +20,20 @@ public sealed class EmbedTaskHandler(
 ) : ITaskHandler<EmbedTask>
 {
 
-    public async Task HandleTaskAsync(EmbedTask data, CancellationToken cancellationToken = default)
+    public async Task<ITaskResult> HandleTaskAsync(EmbedTask data, IEnumerable<object> dependencies, CancellationToken cancellationToken = default)
     {
-        var document = await repository.GetByRidAsync(data.Rid, cancellationToken) ?? throw new Exception("Document not found");
+        if (!data.Documents.Any()) throw new Exception("No input document IDs provided");
+
+        var nextId = data.Documents.FirstOrDefault(x => !x.Value).Key;
+        var document = await repository.GetByRidAsync(nextId, cancellationToken) ?? throw new Exception("Document not found");
+
         if (string.IsNullOrEmpty(document.Summary)) throw new Exception("Document summary is empty");
         var embedding = await ollamaService.EmbedAsync(document.Summary);
         document.Embedding = embedding;
         await repository.UpdateAsync(document, cancellationToken);
+
+        data.Documents[nextId] = true;
+        data.Progress = $"{data.Documents.Count(x => x.Value) / (float)data.Documents.Count * 100:0.##}%";
+        return data.Documents.All(x => x.Value) ? TaskResult.Completed(data) : TaskResult.Suspended(data);
     }
 }

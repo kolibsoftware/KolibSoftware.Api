@@ -1,6 +1,7 @@
 using System.Text.Json;
 using KolibSoftware.Api.Infra.Models;
 using KolibSoftware.Api.Infra.Repo;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -45,8 +46,8 @@ public sealed class TaskWorker(
                 {
                     try
                     {
-                        task.Status = await DispatchTask(task, scope.ServiceProvider, stoppingToken);
-                        task.HandledAt = DateTime.UtcNow;
+                        var result = await DispatchTask(task, scope.ServiceProvider, stoppingToken);
+                        result.Apply(task);
                         await repository.UpdateAsync(task, stoppingToken);
                     }
                     catch (Exception ex)
@@ -64,20 +65,27 @@ public sealed class TaskWorker(
     /// <param name="serviceProvider"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Models.TaskStatus> DispatchTask(TaskModel task, IServiceProvider serviceProvider, CancellationToken cancellationToken)
+    private async Task<ITaskResult> DispatchTask(TaskModel task, IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {
         var taskType = TaskRegistry.GetTaskType(task.Name);
         if (taskType == null)
         {
             logger.LogUnregisteredTaskType(task.Name);
-            return Models.TaskStatus.Failure;
+            return TaskResult.Failed();
         }
 
         var data = task.Data.Deserialize(taskType);
         if (data == null)
         {
             logger.LogFailedToDeserializeTaskData(task.Name, taskType.FullName!);
-            return Models.TaskStatus.Failure;
+            return TaskResult.Failed();
+        }
+
+        var dependencies = task.Dependencies.Select(d => d.Dependency.Data.Deserialize(TaskRegistry.GetTaskType(d.Dependency.Name)!)).ToList();
+        if(dependencies.Any(d => d == null))
+        {
+            logger.LogFailedToDeserializeTaskDependencies(task.Name);
+            return TaskResult.Failed();
         }
 
         var handlerType = typeof(ITaskHandler<>).MakeGenericType(taskType);
@@ -85,31 +93,33 @@ public sealed class TaskWorker(
         if (handlers.Count != 1)
         {
             logger.LogInvalidNumberOfTaskHandlers(task.Name, handlers.Count);
-            return Models.TaskStatus.Failure;
+            return TaskResult.Failed();
         }
 
         var handler = handlers.First();
         try
         {
-            await handler.HandleTaskAsync(data, cancellationToken);
-            return Models.TaskStatus.Success;
+            var result = await handler.HandleTaskAsync(data, dependencies!, cancellationToken);
+            return result;
         }
         catch (Exception ex)
         {
             var handlerTypeName = handler.GetType().FullName ?? "UnknownHandler";
             logger.LogErrorHandlingTask(task.Name, handlerTypeName, ex);
-            return Models.TaskStatus.Failure;
+            return TaskResult.Failed();
         }
     }
 
     /// <summary>
-    /// Query that selects pending tasks that are older than a specified age threshold, to be dispatched by the task worker service.
+    /// Query that selects tasks that are waiting for their dependencies to be completed, to be dispatched by the task worker service.
     /// </summary>
     public sealed class TaskQuery() : IQuery<TaskModel>
     {
         public IQueryable<TaskModel> Apply(IQueryable<TaskModel> query)
         {
-            return query.Where(t => t.Status == Models.TaskStatus.Pending && t.Dependencies.All(d => d.Dependency.Status == Models.TaskStatus.Success));
+            return query.Include(x => x.Dependencies).ThenInclude(d => d.Dependency)
+                .Where(t => t.Status == Models.TaskStatus.Pending && t.Dependencies.All(d => d.Dependency.Status == Models.TaskStatus.Completed))
+                .Take(10);
         }
     }
 }
