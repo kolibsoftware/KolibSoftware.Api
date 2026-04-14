@@ -28,7 +28,7 @@ namespace KolibSoftware.Api.Example.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Content = table.Column<string>(type: "text", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Embedding = table.Column<byte[]>(type: "vector(768)", nullable: false),
+                    Embedding = table.Column<byte[]>(type: "vector(2560)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid(36)", nullable: false, collation: "ascii_general_ci"),
                     UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),

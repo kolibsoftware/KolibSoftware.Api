@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KolibSoftware.Api.Example.Migrations
 {
     [DbContext(typeof(ApiDbContext))]
-    [Migration("20260414193658_Initial")]
+    [Migration("20260414231937_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -51,8 +51,8 @@ namespace KolibSoftware.Api.Example.Migrations
 
                     b.Property<byte[]>("Embedding")
                         .IsRequired()
-                        .HasColumnType("vector(768)")
-                        .HasAnnotation("MariaDB:VectorColumn", "VECTOR(768)");
+                        .HasColumnType("vector(2560)")
+                        .HasAnnotation("MariaDB:VectorColumn", "VECTOR(2560)");
 
                     b.Property<Guid>("Rid")
                         .HasColumnType("uuid");

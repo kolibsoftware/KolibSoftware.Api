@@ -17,5 +17,5 @@ public class DocumentModel : IResource, ICreateAuditable, IUpdateAuditable, IDel
     public DateTime? DeletedAt { get; set; }
     public Guid? DeletedBy { get; set; }
 
-    public static readonly float[] EmptyEmbedding = new float[768];
+    public static readonly float[] EmptyEmbedding = new float[2560];
 }

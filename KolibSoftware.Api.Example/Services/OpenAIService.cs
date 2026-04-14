@@ -12,21 +12,17 @@ public class OpenAIService(
         Endpoint = new Uri(host)
     });
 
-    public async Task<string> GenerateAsync(string prompt)
+    public async Task<string> GenerateAsync(string prompt, CancellationToken cancellationToken = default)
     {
         var chatClient = Client.GetChatClient("gemma-3-27b");
-        var response = await chatClient.CompleteChatAsync([prompt]);
+        var response = await chatClient.CompleteChatAsync([prompt], cancellationToken: cancellationToken);
         return response.Value.Content[0].Text;
     }
 
-    public async IAsyncEnumerable<string> GenerateManyAsync(string prompt)
+    public async Task<float[]> EmbedAsync(string prompt, CancellationToken cancellationToken = default)
     {
-        var chatClient = Client.GetChatClient("gemma-3-27b");
-        await foreach (var message in chatClient.CompleteChatStreamingAsync([prompt]))
-        {
-            if (message.ContentUpdate is not null)
-                foreach (var update in message.ContentUpdate)
-                    yield return update.Text ?? string.Empty;
-        }
+        var embeddingClient = Client.GetEmbeddingClient("qwen3-embedding-4b");
+        var response = await embeddingClient.GenerateEmbeddingAsync(prompt, cancellationToken: cancellationToken);
+        return response.Value.ToFloats().ToArray();
     }
 }

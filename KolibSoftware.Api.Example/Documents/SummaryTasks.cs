@@ -28,7 +28,7 @@ public sealed class SummaryTaskHandler(
         var document = await repository.GetByRidAsync(nextId, cancellationToken) ?? throw new Exception("Document not found");
 
         if (string.IsNullOrEmpty(document.Content)) throw new Exception("Document content is empty");
-        var summary = await summaryService.GenerateAsync($"Clean the following text, then summarize it including only the key points and critical data on 100 words or less:\n\n{document.Content}");
+        var summary = await summaryService.GenerateAsync($"Clean the following text, then summarize it including only the key points and critical data on 100 words or less:\n\n{document.Content}", cancellationToken);
         document.Summary = summary;
         await repository.UpdateAsync(document, cancellationToken);
 

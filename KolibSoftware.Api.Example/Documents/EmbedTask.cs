@@ -16,7 +16,7 @@ public class EmbedTask
 [TaskHandler]
 public sealed class EmbedTaskHandler(
     IRepository<DocumentModel> repository,
-    OllamaService ollamaService
+    OpenAIService embedService
 ) : ITaskHandler<EmbedTask>
 {
 
@@ -28,7 +28,7 @@ public sealed class EmbedTaskHandler(
         var document = await repository.GetByRidAsync(nextId, cancellationToken) ?? throw new Exception("Document not found");
 
         if (string.IsNullOrEmpty(document.Summary)) throw new Exception("Document summary is empty");
-        var embedding = await ollamaService.EmbedAsync(document.Summary);
+        var embedding = await embedService.EmbedAsync(document.Summary, cancellationToken);
         document.Embedding = embedding;
         await repository.UpdateAsync(document, cancellationToken);
 
