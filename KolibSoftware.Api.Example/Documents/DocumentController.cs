@@ -96,7 +96,7 @@ public sealed class DocumentController(
         var queryEmbedding = await ollamaService.EmbedAsync(query);
         var documents = await context.Documents
             .OrderBy(d => DatabaseUtils.VecDistance(d.Embedding, queryEmbedding))
-            .Take(3)
+            .Take(5)
             .ToListAsync();
         return Ok(new
         {
@@ -115,7 +115,7 @@ public sealed class DocumentController(
         var queryEmbedding = await ollamaService.EmbedAsync(query);
         var documents = await context.Documents
             .OrderBy(d => DatabaseUtils.VecDistance(d.Embedding, queryEmbedding))
-            .Take(3)
+            .Take(5)
             .ToListAsync();
         var prompt = $"Top 3 relevant documents:\n {string.Join("\n\n", documents.Select(d => $"- {d.Summary}"))}\n\nAnswer directly with the fewest words.\n\nQuestion: {query}\n\nAnswer:";
         var response = await openAIService.GenerateAsync(prompt);
