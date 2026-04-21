@@ -93,7 +93,7 @@ public sealed class DocumentController(
     [HttpGet("distance")]
     public async Task<IActionResult> QueryFragments([FromQuery] string query)
     {
-        var queryEmbedding = await ollamaService.EmbedAsync(query);
+        var queryEmbedding = await openAIService.EmbedAsync(query);
         var documents = await context.Documents
             .OrderBy(d => DatabaseUtils.VecDistance(d.Embedding, queryEmbedding))
             .Take(5)
@@ -112,7 +112,7 @@ public sealed class DocumentController(
     [HttpGet("search")]
     public async Task<IActionResult> QueryTextDocuments([FromQuery] string query)
     {
-        var queryEmbedding = await ollamaService.EmbedAsync(query);
+        var queryEmbedding = await openAIService.EmbedAsync(query);
         var documents = await context.Documents
             .OrderBy(d => DatabaseUtils.VecDistance(d.Embedding, queryEmbedding))
             .Take(5)
